@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+# scan outputs and target lists (contain results about named third-party organisations)
+smoke_out*/
+smoke_targets.csv
+targets.csv
+results.json
+results.csv
+report.html

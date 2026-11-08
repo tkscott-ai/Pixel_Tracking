@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Consent good</title></head><body>
+<h1>IVF clinic (good consent platform)</h1><a href="/consent-good/ivf-info">IVF information</a>
+<div id="onetrust-banner-sdk" style="position:fixed;bottom:0;background:#eee;padding:8px;display:none">
+ We use cookies. <button id="acc">Accept all</button>
+ <button id="rej">Reject all</button></div>
+<script>
+var c=(document.cookie.match(/consent=(\w+)/)||[])[1];
+function loadMeta(){if(window._loaded)return;window._loaded=1;
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','5550001112223334');fbq('track','PageView');}
+function choose(v){document.cookie='consent='+v+';path=/';document.getElementById('onetrust-banner-sdk').style.display='none';if(v==='accepted')loadMeta();}
+if(c==='accepted')loadMeta();
+if(!c){var b=document.getElementById('onetrust-banner-sdk');b.style.display='block';
+b.querySelectorAll('button')[0].onclick=function(){choose('accepted')};b.querySelectorAll('button')[1].onclick=function(){choose('rejected')};}
+</script></body></html>
