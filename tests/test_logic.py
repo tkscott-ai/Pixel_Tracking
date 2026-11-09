@@ -447,3 +447,33 @@ def test_report_renders_consent_table_and_adv_matching(tmp_path):
 def test_verdict_notice_only_banner_note():
     v = ps.consent_verdict([H("meta")], _pass(False), _pass(False), ["Cookie notice (unrecognised platform)"])
     assert v["verdict"] == "no_consent_control_found" and any("notice-only" in n for n in v["notes"])
+
+
+# ---- recalibration (bulk-run learnings) ------------------------------------------
+@pytest.mark.parametrize("path,sens", [
+    ("/investing/super", False), ("/sustainability", False), ("/about/history", False),
+    ("/contact-us", False), ("/our-services", False), ("/sti-testing", True), ("/hiv", True),
+    ("/ivf-treatment", True), ("/book-appointment", True), ("/mental-health/anxiety", True),
+])
+def test_is_sensitive_url_whole_word_and_threshold(path, sens):
+    assert ps.is_sensitive_url("https://x.com.au" + path) is sens
+
+
+def test_many_marketing_pixels_without_sensitive_context_is_capped_at_medium():
+    keys = ["meta", "tiktok", "pinterest", "linkedin", "bing", "google_ads", "hotjar", "ga4"]
+    a = ps.assess(site([H(k, page="https://x.com.au/") for k in keys]))
+    assert a["rating"] == "Medium" and a["score"] == 59
+    assert any("no higher than Medium" in r for r in a["reasons"])
+
+
+def test_same_pixels_on_sensitive_page_can_be_high():
+    page = "https://x.com.au/mental-health/anxiety"
+    keys = ["meta", "pinterest", "linkedin", "google_ads", "hotjar"]
+    a = ps.assess(site([H(k, page=page, page_url_sent=True) for k in keys]))
+    assert a["rating"] == "High"
+
+
+def test_adtech_vendor_stacking_is_capped():
+    five = ps.assess(site([H(k, page="https://x.com.au/ivf") for k in ["meta", "tiktok", "pinterest", "linkedin", "bing"]]))
+    six = ps.assess(site([H(k, page="https://x.com.au/ivf") for k in ["meta", "tiktok", "pinterest", "linkedin", "bing", "google_ads"]]))
+    assert five["score"] == six["score"]

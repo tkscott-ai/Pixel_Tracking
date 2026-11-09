@@ -195,7 +195,7 @@ SENSITIVE_TERMS: dict[str, int] = {
     "treatment": 3, "telehealth": 3, "consult": 3, "appointment": 3, "book": 3,
     "enquir": 3, "inquir": 3, "contact": 2, "referral": 3, "patient": 2, "service": 1,
     "clinic": 1, "symptom": 3, "diagnos": 3, "prescription": 3, "medication": 3,
-    "assessment": 3, "donor": 4, "surrogacy": 4, "pathology": 2, "intake": 3,
+    "assessment": 3, "donor-egg": 4, "egg-donor": 4, "sperm": 4, "donor-conception": 4, "surrogacy": 4, "pathology": 2, "intake": 3,
 }
 SKIP_LINK_RE = re.compile(r"\.(pdf|jpe?g|png|gif|svg|webp|zip|docx?|xlsx?|mp4|css|js)(\?|$)|^(mailto|tel|javascript|sms):", re.I)
 PRIVACY_RE = re.compile(r"privacy|collection[-_ ]notice", re.I)
@@ -452,12 +452,21 @@ def gcs_state(gcs: str) -> str:
 # Pure logic: link scoring
 # --------------------------------------------------------------------------- #
 def text_sensitivity(text: str) -> int:
+    """Sum of weights of sensitive terms. Short terms (<=4 chars, e.g. 'sti', 'hiv', 'ivf') must match a whole
+    word so 'sti' doesn't fire inside 'investing'; longer stems match as substrings ('psycholog')."""
     t = text.lower()
-    return sum(w for term, w in SENSITIVE_TERMS.items() if term in t)
+    tokens = set(re.split(r"[^a-z0-9]+", t))
+    total = 0
+    for term, w in SENSITIVE_TERMS.items():
+        if (term in t) if len(term) > 4 else (term in tokens):
+            total += w
+    return total
 
 
 def is_sensitive_url(url: str) -> bool:
-    return text_sensitivity(urllib.parse.urlsplit(url).path) > 0
+    """A page that looks sensitive by its URL path (treatment, booking, enquiry, mental health, ...).
+    Generic words like 'contact' or 'service' alone are not enough (needs weight >= 3)."""
+    return text_sensitivity(urllib.parse.urlsplit(url).path) >= 3
 
 
 def score_links(links: list[tuple[str, str]], base_url: str, max_pages: int = 3) -> list[str]:
@@ -531,8 +540,8 @@ def privacy_mentions(text: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Pure logic: assessment
 # --------------------------------------------------------------------------- #
-WEIGHT = {"meta": 30, "tiktok": 15, "pinterest": 15, "linkedin": 15, "bing": 15,
-          "google_ads": 15, "hotjar": 15, "clarity": 15}
+WEIGHT = {"meta": 30, "tiktok": 20, "pinterest": 20, "linkedin": 20, "bing": 20,
+          "google_ads": 20, "hotjar": 10, "clarity": 10}
 
 
 def rating_for(score: int) -> str:
@@ -557,6 +566,9 @@ def assess(res: SiteResult) -> dict[str, Any]:
     fired = {h.key for h in beacons}
 
     # 1. Which vendors transmitted data before consent
+    # ad-tech: strongest vendor counts in full, each extra vendor adds a little (capped) so a long tail of
+    # marketing pixels doesn't alone saturate the score; session replay counted separately.
+    adtech_w, replay_w = [], []
     for key in sorted(fired):
         t = TRACKER_BY_KEY[key]
         hs = [h for h in beacons if h.key == key]
@@ -570,10 +582,14 @@ def assess(res: SiteResult) -> dict[str, Any]:
                 why = "granted/partial" if states & {"granted", "partial"} else "no consent signal (gcs missing)"
                 reasons.append(f"GA4 beacon sent before consent: {why}")
         elif key in WEIGHT:
-            score += WEIGHT[key]
+            (replay_w if t.category == "session_replay" else adtech_w).append(WEIGHT[key])
             ids = ", ".join(sorted({h.pixel_id for h in hs if h.pixel_id})) or "id not parsed"
             label = "session-replay" if t.category == "session_replay" else "ad-tech"
             reasons.append(f"{t.vendor} ({label}) beacon sent before consent [{ids}]")
+    if adtech_w:
+        score += min(40, max(adtech_w) + 5 * (len(adtech_w) - 1))
+    if replay_w:
+        score += min(15, 10 + 5 * (len(replay_w) - 1))
     # script loaded but no beacon observed: weaker signal
     for key in sorted({h.key for h in scripts} - fired):
         if key in WEIGHT:
@@ -596,7 +612,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
     leak = [h for h in beacons if h.page_url_sent and h.category in ("advertising", "session_replay")
             and is_sensitive_url(h.page)]
     if leak:
-        score += 10
+        score += 15
         pages = ", ".join(sorted({urllib.parse.urlsplit(h.page).path or "/" for h in leak}))
         reasons.append(f"Sensitive page URL sent to ad/replay vendor(s): {pages}")
 
@@ -641,6 +657,13 @@ def assess(res: SiteResult) -> dict[str, Any]:
             score += 15
         reasons.extend("Consent test: " + n for n in ct["notes"])
 
+    # High needs evidence tied to sensitive context, not just marketing pixels on a generic page.
+    ct_bad = bool(ct and ct["verdict"] == "reject_ignored")
+    sensitive_evidence = bool(conv or leak or adv or ct_bad)
+    if score >= 60 and not sensitive_evidence:
+        score = 59
+        reasons.append("Rated no higher than Medium: no ad-tech/replay was observed on pages that look sensitive by URL, "
+                       "no advanced matching and no ignored Reject (the scan only samples a few pages)")
     score = max(0, min(100, score))
     if not reasons:
         reasons.append("No tracker requests observed before consent on pages visited")
@@ -791,7 +814,11 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
         "<title>pixel_scan report</title><style>", _CSS, "</style></head><body><main>",
         "<h1>Pre-consent tracking scan</h1>",
         f"<p class='sub'>{_e(len(rs))} sites &middot; generated {_e(generated)} &middot; pixel_scan {_e(__version__)}</p>",
-        f"<div class='banner'><b>Potential issue, not a legal finding.</b> {_e(DISCLAIMER.split('. ', 1)[1])}</div>",
+        f"<div class='banner'><b>Potential issue, not a legal finding.</b> {_e(DISCLAIMER.split('. ', 1)[1])}"
+        "<br><span class='mut'>Method: one automated pass per site from a fresh browser with no consent given, "
+        "robots.txt honoured, homepage + up to 3 likely-sensitive pages + privacy policy. The organisations were not contacted, "
+        "findings are unverified, sites may have changed since the scan, and 'Not scanned' means the site blocked or "
+        "refused automated access - not that it is compliant.</span></div>",
         "<div class='tiles'>",
     ]
     for k, n in counts.items():
@@ -1135,7 +1162,7 @@ def _recorder(state: dict, hits: list[TrackerHit], cmps: set[str]) -> Callable:
 
 
 async def _visit(page: Any, url: str, role: str, nav_timeout: int, settle: float, state: dict,
-                 screenshot: bool = False) -> tuple[PageInfo, list]:
+                 screenshot: Any = False) -> tuple[PageInfo, list]:
     info = PageInfo(url=url, role=role)
     links: list = []
     state["page"] = url
@@ -1150,7 +1177,7 @@ async def _visit(page: Any, url: str, role: str, nav_timeout: int, settle: float
         info.url = page.url
         state["page"] = page.url
         info.title = (await page.title())[:150]
-        if screenshot:
+        if screenshot is True or screenshot == "all" or (screenshot == "home" and role == "home"):
             try:  # viewport only, taken with no consent given: shows the banner state at scan time
                 shot = await page.screenshot(type="jpeg", quality=55, timeout=8000)
                 info.screenshot = base64.b64encode(shot).decode("ascii")
@@ -1227,6 +1254,14 @@ async def scan_site(browser: Any, target: dict, *, max_pages: int = 3, nav_timeo
         page.on("framenavigated", lambda f: state.update(page=f.url) if f == page.main_frame and f.url.startswith("http") else None)
 
         home, links = await _visit(page, target["url"], "home", nav_timeout, settle, state, screenshots)
+        if home.error and re.search(r"ERR_NAME_NOT_RESOLVED|ERR_CONNECTION|ERR_EMPTY|ERR_TIMED_OUT|Timeout", home.error):
+            u = urllib.parse.urlsplit(target["url"])
+            alt_host = u.netloc[4:] if u.netloc.startswith("www.") else "www." + u.netloc
+            alt = urllib.parse.urlunsplit((u.scheme, alt_host, u.path, u.query, ""))
+            if await robots.allowed(alt):
+                home2, links2 = await _visit(page, alt, "home", nav_timeout, settle, state, screenshots)
+                if not home2.error:
+                    home, links = home2, links2
         res.pages.append(home)
         if home.error and not home.status:
             res.status, res.error = "error", home.error
@@ -1337,7 +1372,21 @@ def cmd_scan(args: argparse.Namespace) -> int:
         print("note: --consent-test clicks Accept/Reject on consent banners (3 passes per site; no forms are submitted)",
               file=sys.stderr)
 
+    os.makedirs(args.outdir, exist_ok=True)
+    partial = os.path.join(args.outdir, "results.partial.jsonl")
+    prior: list[SiteResult] = []
+    if args.resume and os.path.exists(partial):
+        with open(partial, encoding="utf-8") as f:
+            prior = [result_from_dict(json.loads(line)) for line in f if line.strip()]
+        done_domains = {r.domain for r in prior}
+        targets = [t for t in targets if t["domain"] not in done_domains]
+        print(f"resuming: {len(prior)} already done, {len(targets)} to go", file=sys.stderr)
+    elif os.path.exists(partial):
+        os.remove(partial)
+
     def progress(n: int, total: int, r: SiteResult) -> None:
+        with open(partial, "a", encoding="utf-8") as f:  # checkpoint every site so a crash loses nothing
+            f.write(json.dumps(asdict(r), ensure_ascii=False) + "\n")
         a = r.assessment
         extra = f" [consent: {r.consent_test['verdict']}]" if r.consent_test else ""
         print(f"[{n}/{total}] {r.domain}: {a['rating']} ({a['score']}){extra}"
@@ -1352,8 +1401,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
         print("error: playwright is not installed. Run: pip install playwright && python -m playwright install chromium",
               file=sys.stderr)
         return 2
+    results = prior + results
     results.sort(key=lambda r: -r.assessment["score"])
-    os.makedirs(args.outdir, exist_ok=True)
     save_json(results, os.path.join(args.outdir, "results.json"))
     save_csv(results, os.path.join(args.outdir, "results.csv"))
     save_report(results, os.path.join(args.outdir, "report.html"))
@@ -1393,7 +1442,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     s.add_argument("--delay", type=float, default=1.0, help="seconds between page loads on one site")
     s.add_argument("--ignore-robots", action="store_true", help="do NOT honour robots.txt (use only with authorisation)")
     s.add_argument("--headed", action="store_true")
-    s.add_argument("--screenshots", action="store_true", help="embed a viewport screenshot of each page in the report (larger files)")
+    s.add_argument("--screenshots", nargs="?", const="all", choices=["home", "all"],
+                   help="embed viewport screenshots in the report: 'home' = homepage only, 'all' (default if flag given) = every page")
+    s.add_argument("--resume", action="store_true", help="skip targets already in <outdir>/results.partial.jsonl and continue")
     s.add_argument("--consent-test", action="store_true",
                    help="also rescan with Reject and Accept clicked, to check whether the consent platform really blocks tracking")
     s.set_defaults(fn=cmd_scan)

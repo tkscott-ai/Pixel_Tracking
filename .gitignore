@@ -10,3 +10,9 @@ targets.csv
 results.json
 results.csv
 report.html
+site_public/
+run_*/
+run_*.log
+data/targets_followup.csv
+data/targets_top200.csv
+site_public/
