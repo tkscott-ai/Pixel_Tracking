@@ -531,3 +531,18 @@ def test_report_has_basis_and_observed_tile_and_cites_ruling():
 def test_notice_note_distinguishes_app5_from_app3_3():
     v = ps.consent_verdict([H("meta")], _pass(False), _pass(False), ["Cookie notice (unrecognised platform)"])
     assert any("not itself consent under APP 3.3" in n for n in v["notes"])
+
+
+def test_advanced_matching_only_contact_fields_are_scored():
+    base = ps.assess(site([H("meta")]))["score"]
+    assert ps.assess(site([H("meta", adv_matching=["external_id", "country"])]))["score"] == base
+    assert ps.assess(site([H("meta", adv_matching=["external_id", "em"])]))["score"] == base + 10
+    assert ps.assess(site([H("meta", adv_matching=["form:ph"])]))["score"] == base + 10
+    a = ps.assess(site([H("meta", adv_matching=["external_id"])]))
+    assert any("none are contact details" in r for r in a["reasons"])
+
+
+def test_ga_audiences_is_not_google_ads():
+    h = one("https://www.google.com.au/ads/ga-audiences?v=1&tid=G-ABC123&gtm=45je")
+    assert h.key == "ga_audiences" and h.pixel_id == "G-ABC123"
+    assert one("https://googleads.g.doubleclick.net/pagead/viewthroughconversion/951646831/?cv=11").key == "google_ads"

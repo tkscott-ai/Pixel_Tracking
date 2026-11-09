@@ -125,10 +125,14 @@ TRACKERS: list[Tracker] = [
             _r(r"^https?://([\w-]+\.)*(google-analytics\.com|analytics\.google\.com)/(g/|j/)?collect"
                r"|^https?://stats\.g\.doubleclick\.net/(g|j)/collect"),
             _r(r"^https?://www\.googletagmanager\.com/gtag/js\b|^https?://www\.google-analytics\.com/analytics\.js")),
+    # GA4's audience call (advertising features / Google signals): carries the GA4 measurement ID, not a Google Ads ID.
+    Tracker("ga_audiences", "Google Analytics audiences (advertising features)", "advertising",
+            _r(r"^https?://www\.google\.[a-z.]+/ads/(ga-audiences|measurement/)"),
+            None),
     Tracker("google_ads", "Google Ads / DoubleClick", "advertising",
             _r(r"^https?://(www\.)?googleadservices\.com/pagead/(conversion|viewthroughconversion)"
                r"|^https?://[\w.-]*doubleclick\.net/(pagead|activity|ddm|td)/"
-               r"|^https?://www\.google\.com(\.au)?/(pagead|ads)/(1p-)?(user-list|conversion|ga-audiences)"),
+               r"|^https?://www\.google\.com(\.au)?/(pagead|ads)/(1p-)?(user-list|conversion)"),
             _r(r"^https?://www\.googleadservices\.com/pagead/conversion(_async)?\.js"
                r"|^https?://pagead2\.googlesyndication\.com/")),
     Tracker("meta", "Meta Pixel", "advertising",
@@ -357,6 +361,9 @@ def extract_details(key: str, kind: str, url: str, post_data: Optional[str]) -> 
         d["pixel_id"] = _first(p, "tid", "id")
         d["event"] = ",".join(dict.fromkeys(p.get("en", [])))
         d["gcs"] = _first(p, "gcs")
+    elif key == "ga_audiences":
+        d["pixel_id"] = _first(p, "tid")
+        d["gcs"] = _first(p, "gcs")
     elif key == "google_ads":
         m = re.search(r"/(?:conversion|viewthroughconversion)/(\d+)", path)
         d["pixel_id"] = m.group(1) if m else _first(p, "tid", "id")
@@ -387,6 +394,15 @@ def extract_details(key: str, kind: str, url: str, post_data: Optional[str]) -> 
     elif key == "gtm":
         d["pixel_id"] = _first(p, "id")
     return d
+
+
+# Meta advanced-matching fields that carry (hashed) personal contact details. Others (external_id, country, ...)
+# are pseudonymous/coarse and are reported but not treated as the ruling's concern ([16], [80]).
+AM_CONTACT_FIELDS = {"em", "ph", "fn", "ln", "db", "ge", "ct", "st", "zp"}
+
+
+def am_contact_fields(fields: list[str]) -> list[str]:
+    return sorted({f.split(":")[-1] for f in fields if f.split(":")[-1] in AM_CONTACT_FIELDS})
 
 
 _AM_RX = re.compile(r"^(ud|udff)\[(\w+)\]$")
@@ -559,7 +575,7 @@ def privacy_mentions(text: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Pure logic: assessment
 # --------------------------------------------------------------------------- #
-WEIGHT = {"meta": 30, "tiktok": 20, "pinterest": 20, "linkedin": 20, "bing": 20,
+WEIGHT = {"ga_audiences": 10, "meta": 30, "tiktok": 20, "pinterest": 20, "linkedin": 20, "bing": 20,
           "google_ads": 20, "hotjar": 10, "clarity": 10}
 
 
@@ -636,11 +652,15 @@ def assess(res: SiteResult) -> dict[str, Any]:
         reasons.append(f"URL of health-related page(s) (keyword match) sent to ad/replay vendor(s): {pages}")
 
     # 3b. Meta advanced matching (hashed customer identifiers in the pixel payload)
-    adv = sorted({f for h in beacons for f in h.adv_matching})
+    adv_all = sorted({f for h in beacons for f in h.adv_matching})
+    adv = am_contact_fields(adv_all)
     if adv:
         score += 10
-        reasons.append("Meta advanced matching: hashed identifier field(s) sent in pixel payload (" + ", ".join(adv)
+        reasons.append("Meta advanced matching: hashed contact-detail field(s) sent in pixel payload (" + ", ".join(adv)
                        + ") - hashed identifiers can still be personal information")
+    elif adv_all:
+        reasons.append("Meta advanced-matching parameters seen but none are contact details (" + ", ".join(adv_all)
+                       + "); not scored")
 
     # 4. Forms on pages that also carried ad/replay beacons
     adpages = {_norm_page(h.page) for h in beacons if h.category in ("advertising", "session_replay")}
@@ -663,7 +683,8 @@ def assess(res: SiteResult) -> dict[str, Any]:
     # 6. Disclosure context (informational)
     if res.privacy_url and fired:
         undisclosed = [TRACKER_BY_KEY[k].vendor for k in sorted(fired)
-                       if k in PRIVACY_VENDOR_TERMS and k not in res.privacy_mentions and k != "gtm"]
+                       if ("ga4" if k == "ga_audiences" else k) in PRIVACY_VENDOR_TERMS
+                       and ("ga4" if k == "ga_audiences" else k) not in res.privacy_mentions and k != "gtm"]
         if undisclosed:
             reasons.append("Privacy policy does not appear to name: " + ", ".join(undisclosed))
     elif fired and not res.privacy_url:
@@ -708,6 +729,20 @@ def assess(res: SiteResult) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # Serialisation
 # --------------------------------------------------------------------------- #
+def reclassify_hits(hits: list[TrackerHit]) -> list[TrackerHit]:
+    """Re-match stored hits against the current signatures (results saved by older versions)."""
+    out: list[TrackerHit] = []
+    for h in hits:
+        if h.key == "google_ads" and h.kind == "beacon" and re.search(r"/ads/(ga-audiences|measurement/)", h.url):
+            m = match_request(h.url, h.method, None, h.page)
+            if m:
+                n = m[0]
+                n.count, n.page_url_sent = h.count, h.page_url_sent or n.page_url_sent
+                h = n
+        merge_hit(out, h) if out and any((o.key, o.kind, o.pixel_id, o.event, o.gcs, o.page) == (h.key, h.kind, h.pixel_id, h.event, h.gcs, h.page) for o in out) else out.append(h)
+    return out
+
+
 def result_from_dict(d: dict) -> SiteResult:
     return SiteResult(
         domain=d["domain"], url=d["url"], sector=d.get("sector", ""), city=d.get("city", ""),
@@ -1463,6 +1498,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
 def cmd_report(args: argparse.Namespace) -> int:
     results = load_json(args.json)
     for r in results:
+        r.hits = reclassify_hits(r.hits)
         r.assessment = assess(r)  # re-score so rule changes apply to old scans
     save_report(results, args.out)
     print(f"wrote {args.out}")

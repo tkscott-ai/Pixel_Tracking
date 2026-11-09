@@ -204,3 +204,4 @@ def test_notice_only_banner_detected_and_reported(site):
     ct = r.consent_test
     assert ct["verdict"] == "no_consent_control_found"
     assert any("notice-only" in n for n in ct["notes"]) and "Meta Pixel" in ct["notes"][0]
+

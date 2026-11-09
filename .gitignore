@@ -17,3 +17,7 @@ data/targets_followup.csv
 data/targets_top200.csv
 site_public/
 .netlify/
+briefs_out/
+briefs/node_modules/
+data/targets_shortlist.csv
+briefs/.venv/
