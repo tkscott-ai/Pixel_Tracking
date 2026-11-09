@@ -1,4 +1,4 @@
-# pixel_scan
+# Pixel_Tracking (pixel_scan)
 
 Finds Australian organisations in sensitive sectors (IVF, telehealth, mental health, ...) whose websites fire
 ad-tech tracking pixels **before** cookie consent. Output is a triage signal: a *potential issue, not a legal finding*.
