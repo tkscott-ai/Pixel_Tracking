@@ -217,7 +217,7 @@ def test_assess_full_monash_pattern_is_high():
     a = ps.assess(site(hits, pages, cmps=["OneTrust"]))
     assert a["rating"] == "High" and a["score"] <= 100
     text = " ".join(a["reasons"])
-    assert "Conversion-type" in text and "Sensitive page URL" in text and "Form present" in text and "OneTrust" in text
+    assert "Conversion-type" in text and "health-related page(s)" in text and "Form present" in text and "OneTrust" in text
 
 
 def test_conversion_event_on_non_sensitive_page_not_flagged():
@@ -477,3 +477,57 @@ def test_adtech_vendor_stacking_is_capped():
     five = ps.assess(site([H(k, page="https://x.com.au/ivf") for k in ["meta", "tiktok", "pinterest", "linkedin", "bing"]]))
     six = ps.assess(site([H(k, page="https://x.com.au/ivf") for k in ["meta", "tiktok", "pinterest", "linkedin", "bing", "google_ads"]]))
     assert five["score"] == six["score"]
+
+
+# ---- scope: ruling concerned a health service provider ([2026] AICmr 40 [29], [83]-[87]) ------------
+def sited(sector, hits, **kw):
+    r = site(hits, **kw)
+    r.sector = sector
+    return r
+
+
+@pytest.mark.parametrize("sector,health", [
+    ("IVF / fertility", True), ("Private health insurance", True), ("Mental health & community health", True),
+    ("Telehealth", True), ("Pharmacy & retail health", True), ("Aged care & disability", True), ("", True),
+    ("Banking & finance", False), ("Superannuation", False), ("Education & childcare", False),
+    ("General & life insurance", False), ("Legal & employment", False), ("Travel & community", False),
+    ("Telco & energy", False), ("Gambling", False),
+])
+def test_is_health_sector(sector, health):
+    assert ps.is_health_sector(sector) is health
+
+
+def test_non_health_sector_is_observed_not_rated_even_with_strong_signals():
+    page = "https://bank.com.au/home-loans/book-appointment"
+    hits = [H(k, page=page, event="Lead", page_url_sent=True) for k in ("meta", "linkedin", "google_ads")]
+    a = ps.assess(sited("Banking & finance", hits))
+    assert a["rating"] == "Observed"
+    assert a["reasons"][0].startswith("Outside the ruling's health context")
+    assert ps.assess(sited("IVF / fertility", hits))["rating"] in ("High", "Medium")
+
+
+def test_non_health_with_nothing_observed_is_none():
+    assert ps.assess(sited("Banking & finance", []))["rating"] == "None"
+
+
+@pytest.mark.parametrize("path,sens", [
+    ("/book-appointment", True), ("/request-a-nurse-chat", True), ("/egg-freezing/free-chat", True),
+    ("/practices/terms-of-services-patients", False), ("/services/patient-care/when-you-arrive", False),
+    ("/contact-us/service-managers", False), ("/member-outcomes-assessment", False),
+    ("/genetic-carrier-screening", True), ("/fertility-health-check", True),
+])
+def test_health_keyword_match_ignores_generic_words(path, sens):
+    assert ps.is_sensitive_url("https://x.com.au" + path) is sens
+
+
+def test_report_has_basis_and_observed_tile_and_cites_ruling():
+    r = sited("Banking & finance", [H("meta")])
+    r.assessment = ps.assess(r)
+    out = ps.render_report([r])
+    assert "Basis and limitations" in out and "[2026] AICmr 40" in out and "health service provider" in out
+    assert ">Observed<" in out and "Matomo and Jet Interactive" in out and "potentially novel" in out
+
+
+def test_notice_note_distinguishes_app5_from_app3_3():
+    v = ps.consent_verdict([H("meta")], _pass(False), _pass(False), ["Cookie notice (unrecognised platform)"])
+    assert any("not itself consent under APP 3.3" in n for n in v["notes"])

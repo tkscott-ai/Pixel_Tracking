@@ -195,8 +195,23 @@ SENSITIVE_TERMS: dict[str, int] = {
     "treatment": 3, "telehealth": 3, "consult": 3, "appointment": 3, "book": 3,
     "enquir": 3, "inquir": 3, "contact": 2, "referral": 3, "patient": 2, "service": 1,
     "clinic": 1, "symptom": 3, "diagnos": 3, "prescription": 3, "medication": 3,
-    "assessment": 3, "donor-egg": 4, "egg-donor": 4, "sperm": 4, "donor-conception": 4, "surrogacy": 4, "pathology": 2, "intake": 3,
+    "assessment": 3, "genetic": 4, "nurse": 3, "donor-egg": 4, "egg-donor": 4, "sperm": 4, "donor-conception": 4, "surrogacy": 4, "pathology": 2, "intake": 3,
 }
+# Generic words that help find pages worth visiting but do NOT, on their own, make a page "health-related".
+WEAK_TERMS = {"contact", "service", "clinic", "patient", "pathology", "assessment"}
+
+# [2026] AICmr 40 concerned a health service provider: the "sensitive information" finding rests on health-service
+# engagement [83]-[85]. Ratings (High/Medium/Low) are therefore only given to organisations in health-related sectors;
+# others are labelled "Observed". An empty sector (ad-hoc target list) is treated as in scope.
+HEALTH_SECTOR_RX = re.compile(
+    r"ivf|fertil|telehealth|health|hospital|pathology|diagnos|pharmac|dental|medical|aged care|disab|"
+    r"reproductive|drug|alcohol|menopause|hormone|mental", re.I)
+
+
+def is_health_sector(sector: str) -> bool:
+    return not sector or bool(HEALTH_SECTOR_RX.search(sector))
+
+
 SKIP_LINK_RE = re.compile(r"\.(pdf|jpe?g|png|gif|svg|webp|zip|docx?|xlsx?|mp4|css|js)(\?|$)|^(mailto|tel|javascript|sms):", re.I)
 PRIVACY_RE = re.compile(r"privacy|collection[-_ ]notice", re.I)
 EVENT_CONVERSION = {
@@ -451,22 +466,26 @@ def gcs_state(gcs: str) -> str:
 # --------------------------------------------------------------------------- #
 # Pure logic: link scoring
 # --------------------------------------------------------------------------- #
-def text_sensitivity(text: str) -> int:
+def text_sensitivity(text: str, terms: Optional[dict[str, int]] = None) -> int:
     """Sum of weights of sensitive terms. Short terms (<=4 chars, e.g. 'sti', 'hiv', 'ivf') must match a whole
     word so 'sti' doesn't fire inside 'investing'; longer stems match as substrings ('psycholog')."""
     t = text.lower()
     tokens = set(re.split(r"[^a-z0-9]+", t))
     total = 0
-    for term, w in SENSITIVE_TERMS.items():
+    for term, w in (terms or SENSITIVE_TERMS).items():
         if (term in t) if len(term) > 4 else (term in tokens):
             total += w
     return total
 
 
+CORE_TERMS = {k: v for k, v in SENSITIVE_TERMS.items() if k not in WEAK_TERMS}
+
+
 def is_sensitive_url(url: str) -> bool:
-    """A page that looks sensitive by its URL path (treatment, booking, enquiry, mental health, ...).
-    Generic words like 'contact' or 'service' alone are not enough (needs weight >= 3)."""
-    return text_sensitivity(urllib.parse.urlsplit(url).path) >= 3
+    """A page that *looks* health-related by URL keywords (condition, treatment, booking/enquiry on a health site...).
+    A keyword match only - it cannot tell whether the page really reveals health information. Generic words
+    ('contact', 'service', 'patient', 'clinic') do not count on their own."""
+    return text_sensitivity(urllib.parse.urlsplit(url).path, CORE_TERMS) >= 3
 
 
 def score_links(links: list[tuple[str, str]], base_url: str, max_pages: int = 3) -> list[str]:
@@ -606,7 +625,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
     if conv:
         score += 15
         ev = ", ".join(sorted({f"{h.vendor}:{h.event}" for h in conv}))
-        reasons.append(f"Conversion-type event(s) on sensitive page(s): {ev}")
+        reasons.append(f"Conversion-type event(s) on health-related page(s) (URL keyword match): {ev}")
 
     # 3. Page URL disclosed to ad/replay vendors on sensitive pages
     leak = [h for h in beacons if h.page_url_sent and h.category in ("advertising", "session_replay")
@@ -614,7 +633,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
     if leak:
         score += 15
         pages = ", ".join(sorted({urllib.parse.urlsplit(h.page).path or "/" for h in leak}))
-        reasons.append(f"Sensitive page URL sent to ad/replay vendor(s): {pages}")
+        reasons.append(f"URL of health-related page(s) (keyword match) sent to ad/replay vendor(s): {pages}")
 
     # 3b. Meta advanced matching (hashed customer identifiers in the pixel payload)
     adv = sorted({f for h in beacons for f in h.adv_matching})
@@ -662,9 +681,14 @@ def assess(res: SiteResult) -> dict[str, Any]:
     sensitive_evidence = bool(conv or leak or adv or ct_bad)
     if score >= 60 and not sensitive_evidence:
         score = 59
-        reasons.append("Rated no higher than Medium: no ad-tech/replay was observed on pages that look sensitive by URL, "
+        reasons.append("Rated no higher than Medium: no ad-tech/replay was observed on pages that look health-related by URL, "
                        "no advanced matching and no ignored Reject (the scan only samples a few pages)")
     score = max(0, min(100, score))
+    rating = rating_for(score)
+    if not is_health_sector(res.sector) and score >= 1:
+        rating = "Observed"
+        reasons.insert(0, f"Outside the ruling's health context (sector: {res.sector}): tracking was observed, but whether "
+                          "sensitive information is involved is not established, so no risk rating is given")
     if not reasons:
         reasons.append("No tracker requests observed before consent on pages visited")
     ids: dict[str, list[str]] = {}
@@ -675,7 +699,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
                 ids[h.vendor].append(h.pixel_id)
     events = sorted({f"{h.vendor}: {e}" for h in beacons for e in h.event.split(",") if e})
     return {
-        "score": score, "rating": rating_for(score), "reasons": reasons,
+        "score": score, "rating": rating, "reasons": reasons,
         "vendors": sorted({TRACKER_BY_KEY[k].vendor for k in fired}),
         "pixel_ids": ids, "events": events,
     }
@@ -756,7 +780,7 @@ input,select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-ra
 table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{cursor:pointer;user-select:none;white-space:nowrap}
 .badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid currentColor}
-.High{color:var(--high)}.Medium{color:var(--med)}.Low{color:var(--low)}.None{color:var(--none)}.NotScanned{color:var(--na)}
+.High{color:var(--high)}.Medium{color:var(--med)}.Low{color:var(--low)}.None{color:var(--none)}.NotScanned{color:var(--na)}.Observed{color:var(--low)}
 details{border:1px solid var(--line);border-radius:8px;margin:8px 0;background:var(--card)}
 summary{cursor:pointer;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .body{padding:0 14px 12px}
@@ -800,6 +824,30 @@ def _badge(rating: str) -> str:
     return f'<span class="badge {_e(cls)}">{_e(rating)}</span>'
 
 
+BASIS_HTML = (
+    "<details class='basis'><summary><b>Basis and limitations</b></summary><div class='body'>"
+    "<p>Basis: <i>Commissioner Initiated Investigation into Monash IVF Pty Ltd (Privacy)</i> [2026] AICmr 40 (11 June 2026) "
+    "found breaches of APP 3.3, 5.1 and 7.1 where tracking pixels on a <b>health service provider's</b> website collected "
+    "sensitive (health) information without consent or adequate notice and the data was used for retargeting. "
+    "This tool only looks for the technical precondition: ad-tech or analytics requests made from a fresh browser before "
+    "any consent is given.</p><ul>"
+    "<li><b>Scope of ratings.</b> High / Medium / Low are given only to organisations whose sector label (assigned by the "
+    "tool's operator) is health-related. Other organisations are labelled <b>Observed</b>: tracking was seen, but the ruling "
+    "does not establish that sensitive information is involved.</li>"
+    "<li><b>'Health-related page'</b> means the page URL matches health keywords. It does not show that the page "
+    "reveals health information.</li>"
+    "<li><b>Not observable here:</b> retargeting and Custom Audience uploads (the basis of the APP 7.1 finding), whether the "
+    "data is personal or sensitive information, and whether any notice or consent mechanism was adequate (APP 5.1, 3.3). "
+    "A notice-only banner may bear on APP 5 but is not consent under APP 3.3.</li>"
+    "<li><b>Not detected:</b> Matomo and Jet Interactive, which the determination lists. The scan does not submit forms, "
+    "so form-submission events are not observed.</li>"
+    "<li><b>Scoring judgement.</b> The weighting between vendors, and treating Google Analytics with Consent Mode denied as "
+    "low risk, are this tool's own judgements; the determination makes no pixel-by-pixel finding and does not address a "
+    "denied-state ping.</li>"
+    "<li><b>Status of the ruling.</b> It concerns one respondent. The Commissioner describes the 'reasonably identifiable' "
+    "reasoning as potentially novel [74], and merits and judicial review rights exist.</li></ul></div></details>")
+
+
 def render_report(results: list[SiteResult], generated: str = "") -> str:
     generated = generated or _now()
     rs = sorted(results, key=lambda r: -(r.assessment or assess(r))["score"])
@@ -807,7 +855,7 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
         if not r.assessment:
             r.assessment = assess(r)
     counts = {k: sum(1 for r in rs if r.assessment["rating"] == k)
-              for k in ("High", "Medium", "Low", "None", "Not scanned")}
+              for k in ("High", "Medium", "Low", "Observed", "None", "Not scanned")}
     parts = [
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>",
         "<meta name='viewport' content='width=device-width,initial-scale=1'>",
@@ -819,6 +867,7 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
         "robots.txt honoured, homepage + up to 3 likely-sensitive pages + privacy policy. The organisations were not contacted, "
         "findings are unverified, sites may have changed since the scan, and 'Not scanned' means the site blocked or "
         "refused automated access - not that it is compliant.</span></div>",
+        BASIS_HTML,
         "<div class='tiles'>",
     ]
     for k, n in counts.items():
@@ -826,7 +875,7 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
     parts += [
         "</div><div class='controls'><input id='q' placeholder='Filter…' aria-label='Filter'>"
         "<select id='r' aria-label='Rating'><option value=''>All ratings</option>"
-        "<option>High</option><option>Medium</option><option>Low</option><option>None</option>"
+        "<option>High</option><option>Medium</option><option>Low</option><option>Observed</option><option>None</option>"
         "<option>Not scanned</option></select></div>",
         "<table id='t'><thead><tr><th>Site</th><th>Sector</th><th>Rating</th><th>Score</th>"
         "<th>Vendors firing pre-consent</th><th>CMP</th></tr></thead><tbody>",
@@ -1091,7 +1140,8 @@ def consent_verdict(baseline: list[TrackerHit], reject: dict, accept: dict, cmps
             f"; ad-tech fired with no interaction: {', '.join(base_ad)}" if base_ad else ""))
         if cmps:
             notes.append("A cookie banner/notice was detected (" + ", ".join(cmps) + ") but offers no recognisable Accept/Reject "
-                         "button (notice-only, or an unrecognised design) - check the screenshot")
+                         "button (notice-only, or an unrecognised design) - check the screenshot. A notice may bear on APP 5 but is not "
+                         "itself consent under APP 3.3")
     elif rej_clicked and rej_ad:
         verdict = "reject_ignored"
         notes.append("Ad-tech/replay still fired after clicking Reject: " + ", ".join(rej_ad))
