@@ -546,3 +546,14 @@ def test_ga_audiences_is_not_google_ads():
     h = one("https://www.google.com.au/ads/ga-audiences?v=1&tid=G-ABC123&gtm=45je")
     assert h.key == "ga_audiences" and h.pixel_id == "G-ABC123"
     assert one("https://googleads.g.doubleclick.net/pagead/viewthroughconversion/951646831/?cv=11").key == "google_ads"
+
+
+def test_report_method_section_matches_the_scorer():
+    out = ps.render_report([site([H("meta")])])
+    assert "How ratings are calculated" in out
+    for w in ps.WEIGHT:
+        assert ps.TRACKER_BY_KEY[w].vendor in out
+    assert f"<b>High</b> {ps.THRESH_HIGH} or more" in out and f"<b>Medium</b> {ps.THRESH_MEDIUM}&ndash;{ps.THRESH_HIGH - 1}" in out
+    for k in ("conversion", "page_url", "advanced_matching", "reject_ignored"):
+        assert f"+{ps.POINTS[k]}" in out
+    assert "Not a validated model" in out and "Observed" in out

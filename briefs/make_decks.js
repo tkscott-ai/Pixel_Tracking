@@ -23,6 +23,13 @@ const VERDICT_SHORT = {
   no_adtech_observed: "None observed", no_consent_control_found: "No control found", "": "Not tested",
 };
 
+const acceptFound = (d) => d.consent_modes.some((m) => m.mode === "Accept clicked" && m.clicked === "Yes");
+const rejectFound = (d) => d.consent_modes.some((m) => m.mode === "Reject clicked" && m.clicked === "Yes");
+function bannerLine(d) {
+  if (d.cmps.length) return `A cookie banner or notice was detected (${d.cmps.join(", ")}).`;
+  if (acceptFound(d)) return "An Accept button was found on the page, although the banner type was not recognised.";
+  return "No cookie banner or consent platform was detected.";
+}
 function nice(list) { return list.length <= 2 ? list.join(" and ") : list.slice(0, -1).join(", ") + " and " + list[list.length - 1]; }
 
 async function build(d, outFile) {
@@ -86,7 +93,7 @@ async function build(d, outFile) {
   if (urlVendors.length) bullets.push(`On health-related pages, the page URL appeared in requests to ${nice(urlVendors)}.`);
   if (d.meta_dl.origin_only > 0 && d.meta_dl.with_path === 0) bullets.push("Meta Pixel requests on inner pages carried only the site address, not the page path, in the document-location parameter.");
   if (d.adv_contact.length) bullets.push(`Meta advanced matching sent hashed contact-detail field(s): ${d.adv_contact.join(", ")}.`);
-  bullets.push(d.cmps.length ? `A cookie banner or notice was detected (${d.cmps.join(", ")}).` : "No cookie banner or consent platform was detected.");
+  bullets.push(bannerLine(d));
   s.addText(bullets.slice(0, 6).map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1 } })),
     { x: 0.6, y: 3.65, w: 12.1, h: 3.2, fontSize: 15, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 8 });
   notes(s, method + (d.undisclosed.length ? ` Privacy page keyword check (shallow; separate cookie statements are not read): the linked privacy page did not name ${nice(d.undisclosed)}. Verify against the organisation's full policy set before saying anything about disclosure.` : ""));
@@ -128,13 +135,13 @@ async function build(d, outFile) {
       s.addImage({ path: sh.file, x, y: 1.5, w: 5.95, h: 3.7, altText: `Screenshot of ${d.domain}${sh.path}`, objectName: `Screenshot ${i + 1}` });
       s.addText(`${sh.role === "home" ? "Homepage" : "Health-related page"}: ${sh.path.slice(0, 55)}`, { x, y: 5.3, w: 5.95, h: 0.35, fontSize: 11, color: C.accent3, isTextBox: true, margin: 0 });
     });
-    s.addText(d.cmps.length ? `Banner detected: ${d.cmps.join(", ")}. Screenshots were taken at page load, before any consent control was used.` : "No banner detected. Screenshots were taken at page load, before any consent control was used.",
+    s.addText(`${bannerLine(d)} Screenshots were taken at page load, before any consent control was used.`,
       { x: 0.6, y: 5.8, w: 12.1, h: 0.8, fontSize: 14, color: C.text1, isTextBox: true, margin: 0 });
   } else if (shots.length === 1) {
     s.addImage({ path: shots[0].file, x: 0.6, y: 1.5, w: 7.6, h: 4.73, altText: `Screenshot of ${d.domain}`, objectName: "Screenshot" });
     s.addText([
       { text: "Taken at page load, before any consent control was used.", options: { breakLine: true } },
-      { text: d.cmps.length ? `Banner detected: ${d.cmps.join(", ")}.` : "No banner detected." },
+      { text: bannerLine(d) },
     ], { x: 8.6, y: 1.5, w: 4.1, h: 2.2, fontSize: 14, color: C.text1, isTextBox: true, margin: 0, paraSpaceAfter: 8 });
   } else {
     s.addText("No screenshots were captured.", { x: 0.6, y: 1.6, w: 12.1, h: 0.6, fontSize: 16, color: C.text1, isTextBox: true, margin: 0 });

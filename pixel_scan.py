@@ -575,14 +575,18 @@ def privacy_mentions(text: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Pure logic: assessment
 # --------------------------------------------------------------------------- #
+POINTS = {"ga4_denied": 3, "ga4_other": 10, "adtech_cap": 40, "adtech_extra": 5, "replay_first": 10, "replay_extra": 5,
+          "replay_cap": 15, "script_only_divisor": 3, "conversion": 15, "page_url": 15, "advanced_matching": 10,
+          "form": 5, "banner_but_fired": 5, "reject_ignored": 15}
+THRESH_HIGH, THRESH_MEDIUM = 60, 30
 WEIGHT = {"ga_audiences": 10, "meta": 30, "tiktok": 20, "pinterest": 20, "linkedin": 20, "bing": 20,
           "google_ads": 20, "hotjar": 10, "clarity": 10}
 
 
 def rating_for(score: int) -> str:
-    if score >= 60:
+    if score >= THRESH_HIGH:
         return "High"
-    if score >= 30:
+    if score >= THRESH_MEDIUM:
         return "Medium"
     if score >= 1:
         return "Low"
@@ -610,10 +614,10 @@ def assess(res: SiteResult) -> dict[str, Any]:
         if key == "ga4":
             states = {gcs_state(h.gcs) for h in hs}
             if states == {"denied"}:
-                score += 3
+                score += POINTS["ga4_denied"]
                 reasons.append("GA4 beacon sent with Consent Mode denied (cookieless ping; page URL/event still transmitted)")
             else:
-                score += 10
+                score += POINTS["ga4_other"]
                 why = "granted/partial" if states & {"granted", "partial"} else "no consent signal (gcs missing)"
                 reasons.append(f"GA4 beacon sent before consent: {why}")
         elif key in WEIGHT:
@@ -622,13 +626,13 @@ def assess(res: SiteResult) -> dict[str, Any]:
             label = "session-replay" if t.category == "session_replay" else "ad-tech"
             reasons.append(f"{t.vendor} ({label}) beacon sent before consent [{ids}]")
     if adtech_w:
-        score += min(40, max(adtech_w) + 5 * (len(adtech_w) - 1))
+        score += min(POINTS["adtech_cap"], max(adtech_w) + POINTS["adtech_extra"] * (len(adtech_w) - 1))
     if replay_w:
-        score += min(15, 10 + 5 * (len(replay_w) - 1))
+        score += min(POINTS["replay_cap"], POINTS["replay_first"] + POINTS["replay_extra"] * (len(replay_w) - 1))
     # script loaded but no beacon observed: weaker signal
     for key in sorted({h.key for h in scripts} - fired):
         if key in WEIGHT:
-            score += WEIGHT[key] // 3
+            score += WEIGHT[key] // POINTS["script_only_divisor"]
             reasons.append(f"{TRACKER_BY_KEY[key].vendor} library loaded before consent (no beacon observed)")
         elif key == "ga4":
             score += 2
@@ -639,7 +643,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
             if any(e.strip().lower() in EVENT_CONVERSION for e in re.split(r"[,]", h.event) if e)
             and is_sensitive_url(h.page)]
     if conv:
-        score += 15
+        score += POINTS["conversion"]
         ev = ", ".join(sorted({f"{h.vendor}:{h.event}" for h in conv}))
         reasons.append(f"Conversion-type event(s) on health-related page(s) (URL keyword match): {ev}")
 
@@ -647,7 +651,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
     leak = [h for h in beacons if h.page_url_sent and h.category in ("advertising", "session_replay")
             and is_sensitive_url(h.page)]
     if leak:
-        score += 15
+        score += POINTS["page_url"]
         pages = ", ".join(sorted({urllib.parse.urlsplit(h.page).path or "/" for h in leak}))
         reasons.append(f"URL of health-related page(s) (keyword match) sent to ad/replay vendor(s): {pages}")
 
@@ -655,7 +659,7 @@ def assess(res: SiteResult) -> dict[str, Any]:
     adv_all = sorted({f for h in beacons for f in h.adv_matching})
     adv = am_contact_fields(adv_all)
     if adv:
-        score += 10
+        score += POINTS["advanced_matching"]
         reasons.append("Meta advanced matching: hashed contact-detail field(s) sent in pixel payload (" + ", ".join(adv)
                        + ") - hashed identifiers can still be personal information")
     elif adv_all:
@@ -666,14 +670,14 @@ def assess(res: SiteResult) -> dict[str, Any]:
     adpages = {_norm_page(h.page) for h in beacons if h.category in ("advertising", "session_replay")}
     form_pages = [p for p in res.pages if p.forms and _norm_page(p.url) in adpages]
     if form_pages:
-        score += 5
+        score += POINTS["form"]
         reasons.append("Form present on page(s) with ad/replay tracking: "
                        + ", ".join(sorted({urllib.parse.urlsplit(p.url).path or "/" for p in form_pages})))
 
     # 5. CMP context
     adtech_fired = any(h.category in ("advertising", "session_replay") for h in beacons)
     if res.cmps and adtech_fired:
-        score += 5
+        score += POINTS["banner_but_fired"]
         reasons.append("Consent platform/banner detected (" + ", ".join(res.cmps) + ") but ad-tech fired before any consent given")
     elif res.cmps and not beacons:
         reasons.append("Consent platform/banner detected (" + ", ".join(res.cmps) + "); no tracker beacons observed pre-consent")
@@ -694,14 +698,14 @@ def assess(res: SiteResult) -> dict[str, Any]:
     ct = res.consent_test
     if ct:
         if ct["verdict"] == "reject_ignored":
-            score += 15
+            score += POINTS["reject_ignored"]
         reasons.extend("Consent test: " + n for n in ct["notes"])
 
     # High needs evidence tied to sensitive context, not just marketing pixels on a generic page.
     ct_bad = bool(ct and ct["verdict"] == "reject_ignored")
     sensitive_evidence = bool(conv or leak or adv or ct_bad)
-    if score >= 60 and not sensitive_evidence:
-        score = 59
+    if score >= THRESH_HIGH and not sensitive_evidence:
+        score = THRESH_HIGH - 1
         reasons.append("Rated no higher than Medium: no ad-tech/replay was observed on pages that look health-related by URL, "
                        "no advanced matching and no ignored Reject (the scan only samples a few pages)")
     score = max(0, min(100, score))
@@ -883,6 +887,44 @@ BASIS_HTML = (
     "reasoning as potentially novel [74], and merits and judicial review rights exist.</li></ul></div></details>")
 
 
+def method_html() -> str:
+    """'How ratings are calculated' - generated from the same constants assess() uses, so it cannot drift."""
+    by_w: dict[int, list[str]] = {}
+    for k, w in WEIGHT.items():
+        if TRACKER_BY_KEY[k].category == "advertising":
+            by_w.setdefault(w, []).append(TRACKER_BY_KEY[k].vendor)
+    vend = "; ".join(f"{', '.join(v)} = {w}" for w, v in sorted(by_w.items(), reverse=True))
+    replay = ", ".join(TRACKER_BY_KEY[k].vendor for k in WEIGHT if TRACKER_BY_KEY[k].category == "session_replay")
+    P = POINTS
+    rows = [
+        ("Advertising vendors that sent data", f"Strongest vendor counts in full ({vend}); each additional vendor +{P['adtech_extra']}; total capped at {P['adtech_cap']}"),
+        ("Session replay that sent data", f"{replay}: {P['replay_first']} for the first, +{P['replay_extra']} for each more, capped at {P['replay_cap']}"),
+        ("Google Analytics (GA4) sent data", f"+{P['ga4_other']}, or only +{P['ga4_denied']} if Google Consent Mode was set to denied (this tool's own judgement)"),
+        ("Vendor library loaded but no data sent", f"One third of that vendor's weight"),
+        ("Conversion-type event (lead, booking, schedule...) on a health-related page", f"+{P['conversion']}"),
+        ("Address of a health-related page sent to an advertising or replay vendor", f"+{P['page_url']}"),
+        ("Meta advanced matching carrying hashed contact details (email, phone, name...)", f"+{P['advanced_matching']}"),
+        ("A form on a page that also had advertising or replay tracking", f"+{P['form']}"),
+        ("A consent banner was present but advertising still fired", f"+{P['banner_but_fired']}"),
+        ("Reject was clicked and advertising still fired (consent test only)", f"+{P['reject_ignored']}"),
+    ]
+    tr = "".join(f"<tr><td>{_e(a)}</td><td>{_e(b)}</td></tr>" for a, b in rows)
+    return (
+        "<details class='basis method'><summary><b>How ratings are calculated</b></summary><div class='body'>"
+        f"<p>Each site starts at 0 and gains points for what the scan observed <b>before any consent was given</b>. "
+        f"The total (0&ndash;100) is then bucketed: <b>High</b> {THRESH_HIGH} or more, <b>Medium</b> {THRESH_MEDIUM}&ndash;{THRESH_HIGH - 1}, "
+        f"<b>Low</b> 1&ndash;{THRESH_MEDIUM - 1}, <b>None</b> 0.</p>"
+        f"<table><thead><tr><th>What the scan saw</th><th>Points</th></tr></thead><tbody>{tr}</tbody></table><ul>"
+        f"<li><b>Health context only.</b> High, Medium and Low are given only to organisations in health-related sectors. Others are labelled <b>Observed</b>.</li>"
+        f"<li><b>Limit on High.</b> A site cannot reach High on marketing pixels alone: it needs a health-related page address sent to an ad vendor, a conversion-type event "
+        f"on a health-related page, advanced matching with contact details, or an ignored Reject. Otherwise it is capped at {THRESH_HIGH - 1} (Medium).</li>"
+        "<li><b>Health-related page</b> means the page address matches health keywords (condition, treatment, booking or enquiry on a health site). It does not show the page reveals health information.</li>"
+        "<li><b>Not a validated model.</b> The weights and thresholds are the tool author's judgement. They are not taken from the OAIC determination or any standard, "
+        "and a different weighting would move some sites between buckets. Ratings only sort sites for review.</li>"
+        "<li><b>Not scored:</b> how data is used (for example retargeting), audience uploads, whether a notice or consent was adequate, and anything on pages the scan did not visit.</li>"
+        "</ul></div></details>")
+
+
 def render_report(results: list[SiteResult], generated: str = "") -> str:
     generated = generated or _now()
     rs = sorted(results, key=lambda r: -(r.assessment or assess(r))["score"])
@@ -903,6 +945,7 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
         "findings are unverified, sites may have changed since the scan, and 'Not scanned' means the site blocked or "
         "refused automated access - not that it is compliant.</span></div>",
         BASIS_HTML,
+        method_html(),
         "<div class='tiles'>",
     ]
     for k, n in counts.items():

@@ -21,3 +21,7 @@ briefs_out/
 briefs/node_modules/
 data/targets_shortlist.csv
 briefs/.venv/
+briefs_for_review/
+briefs_for_review.zip
+data/targets_shortlist2.csv
+demo/
