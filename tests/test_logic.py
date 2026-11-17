@@ -557,3 +557,48 @@ def test_report_method_section_matches_the_scorer():
     for k in ("conversion", "page_url", "advanced_matching", "reject_ignored"):
         assert f"+{ps.POINTS[k]}" in out
     assert "Not a validated model" in out and "Observed" in out
+
+
+# ---- robots.txt: fail closed -------------------------------------------------------
+import asyncio
+
+
+def _robots(status=200, text="", exc=None):
+    async def fetch(origin):
+        if exc:
+            raise exc
+        return status, text
+    return ps.Robots(fetch=fetch)
+
+
+def run_allowed(r, url="https://x.com.au/page"):
+    return asyncio.run(r.allowed(url))
+
+
+def test_robots_disallow_all_for_our_token():
+    assert run_allowed(_robots(text="User-agent: *\nDisallow: /\n")) is False
+    assert run_allowed(_robots(text="User-agent: pixel_scan\nDisallow: /page\n")) is False
+    assert run_allowed(_robots(text="User-agent: pixel_scan\nDisallow: /other\n")) is True
+
+
+def test_robots_404_means_no_rules_but_403_means_deny():
+    assert run_allowed(_robots(status=404)) is True
+    assert run_allowed(_robots(status=403)) is False
+    assert run_allowed(_robots(status=401)) is False
+
+
+def test_robots_unreachable_or_5xx_is_unverified_and_fails_closed():
+    r = _robots(exc=RuntimeError("SSL: CERTIFICATE_VERIFY_FAILED"))
+    assert run_allowed(r) is False
+    assert "could not be verified" in r.why_not("https://x.com.au/page")
+    r2 = _robots(status=503)
+    assert run_allowed(r2) is False and "HTTP 503" in r2.why_not("https://x.com.au/")
+
+
+def test_robots_ignore_flag_bypasses_everything():
+    assert asyncio.run(ps.Robots(ignore=True, fetch=_robots(exc=RuntimeError("x")).fetch).allowed("https://x.com.au/")) is True
+
+
+def test_report_method_note_does_not_overclaim_robots():
+    out = ps.render_report([site([H("meta")])])
+    assert "robots.txt checked and respected" in out and "robots.txt honoured" not in out

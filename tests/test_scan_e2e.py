@@ -112,7 +112,7 @@ def test_unreachable_site_is_an_error_not_a_crash(site):
     targets = [{"domain": "dead", "url": "http://127.0.0.1:9/"}, {"domain": "ok", "url": site + "/"}]
     rs = run(targets, concurrency=2, nav_timeout=5000)
     by = {r.domain: r for r in rs}
-    assert by["dead"].status == "error" and by["dead"].error
+    assert by["dead"].status in ("error", "skipped_robots") and by["dead"].error  # unreachable host: robots.txt unverifiable -> skipped, never scanned blind
     assert by["ok"].status == "ok" and by["ok"].hits
 
 

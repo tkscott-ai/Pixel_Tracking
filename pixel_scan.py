@@ -941,7 +941,7 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
         f"<p class='sub'>{_e(len(rs))} sites &middot; generated {_e(generated)} &middot; pixel_scan {_e(__version__)}</p>",
         f"<div class='banner'><b>Potential issue, not a legal finding.</b> {_e(DISCLAIMER.split('. ', 1)[1])}"
         "<br><span class='mut'>Method: one automated pass per site from a fresh browser with no consent given, "
-        "robots.txt honoured, homepage + up to 3 likely-sensitive pages + privacy policy. The organisations were not contacted, "
+        "robots.txt checked and respected (sites that disallow the scan, or whose file cannot be read, are skipped), homepage + up to 3 likely-sensitive pages + privacy policy. The organisations were not contacted, "
         "findings are unverified, sites may have changed since the scan, and 'Not scanned' means the site blocked or "
         "refused automated access - not that it is compliant.</span></div>",
         BASIS_HTML,
@@ -1121,25 +1121,50 @@ def load_targets(path: str) -> list[dict]:
 
 
 class Robots:
-    """robots.txt cache; fetched with our own UA token. Missing/unreachable robots = allowed."""
+    """robots.txt cache, checked with our own UA token.
 
-    def __init__(self, ignore: bool = False) -> None:
+    Fail-CLOSED: if robots.txt cannot be fetched (network/TLS error, 5xx) the site is treated as not permitted and is
+    skipped with reason 'robots.txt could not be verified'. (An earlier version failed open, which on networks that
+    intercept TLS meant robots.txt was never actually read.) 404/410 and other 4xx (except 401/403) mean no rules;
+    401/403 mean disallow all.
+
+    `fetch` is an async callable (origin) -> (status, text). scan_all passes one that uses the browser's own network
+    stack, so it trusts the same certificates the scan itself does.
+    """
+
+    def __init__(self, ignore: bool = False, fetch: Optional[Callable] = None) -> None:
         self.ignore = ignore
+        self.fetch = fetch or self._stdlib_fetch
         self._cache: dict[str, Optional[urllib.robotparser.RobotFileParser]] = {}
+        self.unverified: dict[str, str] = {}
 
-    def _fetch(self, origin: str) -> Optional[urllib.robotparser.RobotFileParser]:
-        rp = urllib.robotparser.RobotFileParser()
-        req = urllib.request.Request(origin + "/robots.txt", headers={"User-Agent": USER_AGENT})
+    @staticmethod
+    async def _stdlib_fetch(origin: str) -> tuple[int, str]:
+        def go() -> tuple[int, str]:
+            req = urllib.request.Request(origin + "/robots.txt", headers={"User-Agent": USER_AGENT})
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    return resp.status, resp.read().decode("utf-8", "replace")
+            except urllib.error.HTTPError as e:
+                return e.code, ""
+        return await asyncio.to_thread(go)
+
+    async def _load(self, origin: str) -> Optional[urllib.robotparser.RobotFileParser]:
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                rp.parse(resp.read().decode("utf-8", "replace").splitlines())
-        except urllib.error.HTTPError as e:
-            if e.code in (401, 403):
-                rp.disallow_all = True
-            else:
-                rp.allow_all = True
-        except Exception:  # noqa: BLE001
+            status, text = await self.fetch(origin)
+        except Exception as e:  # noqa: BLE001
+            self.unverified[origin] = f"{type(e).__name__}: {str(e).splitlines()[0][:100]}"
             return None
+        rp = urllib.robotparser.RobotFileParser()
+        if status in (401, 403):
+            rp.disallow_all = True
+        elif status >= 500:
+            self.unverified[origin] = f"HTTP {status}"
+            return None
+        elif status >= 400:
+            rp.allow_all = True
+        else:
+            rp.parse(text.splitlines())
         return rp
 
     async def allowed(self, url: str) -> bool:
@@ -1148,9 +1173,16 @@ class Robots:
         u = urllib.parse.urlsplit(url)
         origin = f"{u.scheme}://{u.netloc}"
         if origin not in self._cache:
-            self._cache[origin] = await asyncio.to_thread(self._fetch, origin)
+            self._cache[origin] = await self._load(origin)
         rp = self._cache[origin]
-        return True if rp is None else rp.can_fetch(BOT_TOKEN, url)
+        return False if rp is None else rp.can_fetch(BOT_TOKEN, url)
+
+    def why_not(self, url: str) -> str:
+        u = urllib.parse.urlsplit(url)
+        origin = f"{u.scheme}://{u.netloc}"
+        if origin in self.unverified:
+            return f"robots.txt could not be verified ({self.unverified[origin]}); skipped"
+        return "disallowed by robots.txt"
 
 
 # Count real data-entry forms; site-search boxes (role=search, type=search, name q/s/search) don't count.
@@ -1366,7 +1398,7 @@ async def scan_site(browser: Any, target: dict, *, max_pages: int = 3, nav_timeo
                      city=target.get("city", ""), scanned_at=_now())
     robots = robots or Robots()
     if not await robots.allowed(target["url"]):
-        res.status, res.error = "skipped_robots", "disallowed by robots.txt"
+        res.status, res.error = "skipped_robots", robots.why_not(target["url"])
         res.assessment = assess(res)
         return res
     ctx = await browser.new_context(user_agent=USER_AGENT, locale="en-AU", timezone_id="Australia/Sydney",
@@ -1460,6 +1492,12 @@ async def scan_all(targets: list[dict], *, concurrency: int = 2, max_pages: int 
     passes = 3 if consent_test else 1
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=not headed)
+        _rctx = await browser.new_context(user_agent=USER_AGENT)
+
+        async def _browser_fetch(origin: str) -> tuple[int, str]:  # same network stack/trust store as the scan itself
+            resp = await _rctx.request.get(origin + "/robots.txt", timeout=15000)
+            return resp.status, (await resp.text()) if resp.ok else ""
+        robots.fetch = _browser_fetch
         try:
             async def work(i: int, t: dict) -> None:
                 nonlocal done

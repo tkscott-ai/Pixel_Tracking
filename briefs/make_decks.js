@@ -17,6 +17,7 @@ const THEME = {
   },
 };
 const HEX = { ink: "1B2A2F", teal: "0F766E", mist: "EEF2F1", line: "CBD5D1", slate: "64748B", amber: "B45309", white: "FFFFFF" };
+const FOOTER_EXT = "Draft for discussion. Automated observations from public web pages: potential issues for verification, not legal findings.";
 const FOOTER = "DRAFT – for internal review – not for distribution. Observations from an automated check: potential issues, not legal findings.";
 const VERDICT_SHORT = {
   reject_ignored: "Reject ignored", fires_before_choice: "Fires before any choice", blocked_until_consent: "Blocked until consent",
@@ -37,10 +38,10 @@ async function build(d, outFile) {
   pres.layout = "LAYOUT_WIDE"; // 13.33 x 7.5
   pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
   pres.title = `${d.domain} - draft evidence brief`;
-  pres.author = "Draft - unreviewed";
+  pres.author = d.external ? "" : "Draft - unreviewed";
   const C = pres.SchemeColor;
 
-  const footerObj = (color) => ({ text: { text: FOOTER, options: { x: 0.6, y: 7.05, w: 11.4, h: 0.3, fontSize: 10, color, isTextBox: true, margin: 0 } } });
+  const footerObj = (color) => ({ text: { text: d.external ? FOOTER_EXT : FOOTER, options: { x: 0.6, y: 7.05, w: 11.4, h: 0.3, fontSize: 10, color, isTextBox: true, margin: 0 } } });
   pres.defineSlideMaster({
     title: "TITLE", background: { color: HEX.ink },
     objects: [
@@ -59,7 +60,7 @@ async function build(d, outFile) {
   });
 
   const notes = (s, t) => s.addNotes(t);
-  const method = `Method: one automated pass on ${d.scanned_at} using ${d.tool}: fresh Chromium context, no consent given, robots.txt honoured, homepage + up to 3 likely-health pages + privacy policy; a second and third pass clicked Reject and Accept where a control could be found (no forms submitted). Requests were matched to vendor signatures. Nothing here has been verified with the organisation.`;
+  const method = `Method: one automated pass on ${d.scanned_at} using ${d.tool}: fresh Chromium context, no consent given, ${d.external ? `robots.txt checked and respected, homepage + ${Math.max(0, d.n_pages - 2)} pages chosen as most likely to be relevant + privacy policy` : 'robots.txt re-checked against every page visited (sites it disallowed or that could not be verified were removed), homepage + up to 3 likely-health pages + privacy policy'}; a second and third pass clicked Reject and Accept where a control could be found (no forms submitted). Requests were matched to vendor signatures. Nothing here has been verified with the organisation.`;
 
   // 1. Title
   pres.addSection({ title: "Brief" });
@@ -67,9 +68,9 @@ async function build(d, outFile) {
   s.addText(d.domain, { placeholder: "title" });
   s.addText("Observations from an automated pre-consent website check", { placeholder: "sub" });
   s.addText([
-    { text: `Sector label: ${d.sector}`, options: { breakLine: true } },
+    { text: d.external ? `Prepared for: ${d.domain}` : `Sector label: ${d.sector}`, options: { breakLine: true } },
     { text: `Scan: ${d.scanned_at} · ${d.n_pages} pages visited · ${d.tool}`, options: { breakLine: true } },
-    { text: "Potential issues for the organisation to verify – not legal findings" },
+    { text: d.external ? "For discussion: observations to verify, not legal findings" : "Potential issues for the organisation to verify – not legal findings" },
   ], { x: 0.8, y: 5.0, w: 11.7, h: 1.2, fontSize: 14, color: C.background2, isTextBox: true, margin: 0, paraSpaceAfter: 4 });
   notes(s, method);
 
@@ -112,16 +113,16 @@ async function build(d, outFile) {
 
   // 4. Health-related pages
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Brief" });
-  s.addText("Health-related pages visited", { placeholder: "title" });
+  s.addText(d.external ? "Pages about health, life insurance and claims" : "Health-related pages visited", { placeholder: "title" });
   if (d.health_pages.length) {
-    const h2 = ["Page", "Forms", "Advertising / replay requests seen", "Page URL sent to"].map((t) => ({ text: t, options: { bold: true, color: HEX.white, fill: { color: HEX.ink }, fontSize: 12 } }));
+    const h2 = ["Page", "Forms", "Advertising / replay requests seen", "Page URL sent to advertising vendor"].map((t) => ({ text: t, options: { bold: true, color: HEX.white, fill: { color: HEX.ink }, fontSize: 12 } }));
     const r2 = [h2].concat(d.health_pages.slice(0, 8).map((p) => [p.path.slice(0, 60), String(p.forms), p.adtech.join(", ") || "None observed", p.url_sent_to.join(", ") || "Not observed"]
       .map((t) => ({ text: t, options: { fontSize: 11, color: HEX.ink } }))));
     s.addTable(r2, { x: 0.6, y: 1.5, w: 12.1, colW: [4.4, 0.8, 4.4, 2.5], border: { type: "solid", pt: 0.75, color: HEX.line }, valign: "middle", margin: [0.05, 0.08, 0.05, 0.08], autoPage: false, objectName: "Health pages table" });
   } else {
-    s.addText("No pages matching health-related URL keywords were visited in this scan.", { x: 0.6, y: 1.6, w: 12.1, h: 0.6, fontSize: 16, color: C.text1, isTextBox: true, margin: 0 });
+    s.addText("No pages matching these keywords were visited in this scan.", { x: 0.6, y: 1.6, w: 12.1, h: 0.6, fontSize: 16, color: C.text1, isTextBox: true, margin: 0 });
   }
-  s.addText("“Health-related” means the page address matches health keywords (for example a condition, treatment or booking page). It does not show that the page reveals information about an individual’s health.",
+  s.addText("“Health-related” means the page address matches keywords (for example health, life insurance, income protection, claims or hardship). It does not show that a page collects or reveals information about an individual’s health.",
     { x: 0.6, y: Math.min(6.2, 1.5 + (Math.min(d.health_pages.length, 8) + 1) * 0.42 + 0.3), w: 12.1, h: 0.7, fontSize: 12, color: C.accent3, isTextBox: true, margin: 0 });
   notes(s, method);
 
@@ -183,7 +184,7 @@ async function build(d, outFile) {
     "Not observed: retargeting, audience uploads, whether information is personal or sensitive, and whether notice or consent was adequate.",
     "The ruling concerns one respondent, makes no pixel-by-pixel finding, and the Commissioner calls the identifiability reasoning potentially novel [74]. Review rights exist.",
     "This brief does not say the organisation has breached the Privacy Act.",
-  ];
+  ].concat(d.external ? ["The determination concerned a health service provider. Whether and how it applies to an insurer’s website is a question for the organisation and its advisers."] : []);
   s.addText(right.map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1 } })), { x: 7.0, y: 1.85, w: 5.7, h: 4.9, fontSize: 15, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 8 });
   notes(s, "Paragraph references are to Commissioner Initiated Investigation into Monash IVF Pty Ltd (Privacy) [2026] AICmr 40. Verify against the primary text before relying on them.");
 
@@ -197,7 +198,7 @@ async function build(d, outFile) {
     "Check whether retargeting or audience uploads use data from health-related pages or forms.",
     "Compare the notice given on arrival, and the privacy policy, against what the tags actually do.",
     "Consider a privacy impact assessment for any tracking on health-related pages.",
-  ];
+  ].concat(d.external ? ["Confirm what the Meta Pixel and Google tags are configured to send from life insurance, income protection, health insurance, claims and hardship pages."] : []);
   s.addText(checks.map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1 } })), { x: 0.6, y: 1.5, w: 12.1, h: 4.9, fontSize: 16, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 10 });
   notes(s, "Neutral checklist; not advice specific to the organisation's legal position.");
 
@@ -205,11 +206,11 @@ async function build(d, outFile) {
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Brief" });
   s.addText("Possible next step (optional)", { placeholder: "title" });
   s.addText([
-    { text: "We can share the full evidence log and screenshots and would welcome the organisation’s own view of what these tags do.", options: { breakLine: true } },
+    { text: (d.external ? "We are happy to share the full evidence log and screenshots, and would welcome your own view of what these tags do and whether our observations are accurate." : "We can share the full evidence log and screenshots and would welcome the organisation’s own view of what these tags do."), options: { breakLine: true } },
     { text: " ", options: { breakLine: true } },
     { text: "[Sender name, role and contact – to be completed after internal approval]", options: { color: HEX.amber, italic: true } },
   ], { x: 0.6, y: 1.6, w: 12.1, h: 2.0, fontSize: 18, color: C.text1, valign: "top", isTextBox: true, margin: 0 });
-  s.addText("Remove this slide if the briefing is a notification only. Do not send until legal and risk review is complete.", { x: 0.6, y: 5.9, w: 12.1, h: 0.6, fontSize: 13, color: C.accent3, italic: true, isTextBox: true, margin: 0 });
+  if (!d.external) s.addText("Remove this slide if the briefing is a notification only. Do not send until legal and risk review is complete.", { x: 0.6, y: 5.9, w: 12.1, h: 0.6, fontSize: 13, color: C.accent3, italic: true, isTextBox: true, margin: 0 });
 
   // Appendix: evidence log
   pres.addSection({ title: "Appendix" });
@@ -234,7 +235,7 @@ async function build(d, outFile) {
   const dataDir = path.join(dir, "data");
   for (const f of fs.readdirSync(dataDir).filter((x) => x.endsWith(".json")).sort()) {
     const d = JSON.parse(fs.readFileSync(path.join(dataDir, f), "utf8"));
-    const out = path.join(dir, f.replace(".json", "_evidence_brief_DRAFT.pptx"));
+    const out = path.join(dir, f.replace(".json", d.external ? "_briefing_for_discussion.pptx" : "_evidence_brief_DRAFT.pptx"));
     await build(d, out);
     console.log("wrote", out);
   }
