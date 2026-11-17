@@ -205,3 +205,9 @@ def test_notice_only_banner_detected_and_reported(site):
     assert ct["verdict"] == "no_consent_control_found"
     assert any("notice-only" in n for n in ct["notes"]) and "Meta Pixel" in ct["notes"][0]
 
+
+
+def test_static_top_bar_notice_is_detected(site):
+    """A notice in normal page flow at the top of the page (not fixed/sticky) must still be recognised."""
+    r = run([{"domain": "t", "url": site + "/consent-topbar/"}], concurrency=1)[0]
+    assert r.cmps == [ps.UNRECOGNISED_BANNER]

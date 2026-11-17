@@ -1,0 +1,166 @@
+{
+ "domain": "hcf.com.au",
+ "url": "https://www.hcf.com.au/",
+ "sector": "Private health insurance",
+ "scanned_at": "2026-11-17 01:08 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 0,
+ "n_health_pages_with_adtech": 0,
+ "adtech_vendors": [
+  "LinkedIn Insight Tag",
+  "Meta Pixel"
+ ],
+ "vendors": [
+  {
+   "vendor": "LinkedIn Insight Tag",
+   "category": "Advertising",
+   "ids": "7240340",
+   "events": "gif",
+   "pages": "5 page(s), e.g. /, /about-us/about-HCF/governance-and-structure/policies/privacy-policy (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Not observed"
+  },
+  {
+   "vendor": "Meta Pixel",
+   "category": "Advertising",
+   "ids": "1673779516264528",
+   "events": "PageView",
+   "pages": "5 page(s), e.g. /, /about-us/about-HCF/governance-and-structure/policies/privacy-policy (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Yes (1 page(s))"
+  }
+ ],
+ "health_pages": [],
+ "other_pages": [
+  "/",
+  "/contact-us",
+  "/members/no-gap-services",
+  "/overseas-health-cover/gp2u",
+  "/about-us/about-HCF/governance-and-structure/policies/privacy-policy"
+ ],
+ "meta_dl": {
+  "origin_only": 4,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [
+  "Cookie notice (unrecognised platform)"
+ ],
+ "privacy_url": "https://www.hcf.com.au/about-us/about-HCF/governance-and-structure/policies/privacy-policy",
+ "undisclosed": [],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control; ad-tech fired with no interaction: LinkedIn Insight Tag, Meta Pixel",
+  "A cookie banner/notice was detected (Cookie notice (unrecognised platform)) but offers no recognisable Accept/Reject button (notice-only, or an unrecognised design) - check the screenshot. A notice may bear on APP 5 but is not itself consent under APP 3.3"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "LinkedIn Insight Tag, Meta Pixel"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/hcf_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "LinkedIn Insight Tag",
+   "/",
+   "gif",
+   "7240340",
+   "No",
+   "1"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/about-us/about-HCF/governance-and-structure/p",
+   "gif",
+   "7240340",
+   "No",
+   "1"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/contact-us",
+   "gif",
+   "7240340",
+   "No",
+   "1"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/members/no-gap-services",
+   "gif",
+   "7240340",
+   "No",
+   "1"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/overseas-health-cover/gp2u",
+   "gif",
+   "7240340",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/",
+   "PageView",
+   "1673779516264528",
+   "Yes",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/about-us/about-HCF/governance-and-structure/p",
+   "PageView",
+   "1673779516264528",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/contact-us",
+   "PageView",
+   "1673779516264528",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/members/no-gap-services",
+   "PageView",
+   "1673779516264528",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/overseas-health-cover/gp2u",
+   "PageView",
+   "1673779516264528",
+   "No",
+   "1"
+  ]
+ ],
+ "log_total": 10
+}

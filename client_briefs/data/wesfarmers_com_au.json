@@ -1,0 +1,163 @@
+{
+ "domain": "wesfarmers.com.au",
+ "url": "https://www.wesfarmers.com.au/",
+ "sector": "Pharmacy & retail health",
+ "scanned_at": "2026-11-17 01:07 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 4,
+ "n_health_pages": 0,
+ "n_health_pages_with_adtech": 0,
+ "adtech_vendors": [
+  "Google Analytics audiences (advertising features)",
+  "LinkedIn Insight Tag"
+ ],
+ "vendors": [
+  {
+   "vendor": "Google Analytics audiences (advertising features)",
+   "category": "Advertising",
+   "ids": "G-151S87N7T2",
+   "events": "-",
+   "pages": "1 page(s), e.g. /",
+   "page_count": 1,
+   "url_in_request": "Not observed"
+  },
+  {
+   "vendor": "LinkedIn Insight Tag",
+   "category": "Advertising",
+   "ids": "4027457",
+   "events": "g, js",
+   "pages": "4 page(s), e.g. /, /investor-centre/debt-investors/contact (+2 more)",
+   "page_count": 4,
+   "url_in_request": "Yes (4 page(s))"
+  },
+  {
+   "vendor": "Google Analytics (GA4)",
+   "category": "Analytics",
+   "ids": "G-151S87N7T2, UA-7513139-1",
+   "events": "page_view",
+   "pages": "4 page(s), e.g. /, /investor-centre/debt-investors/contact (+2 more)",
+   "page_count": 4,
+   "url_in_request": "Yes (4 page(s))"
+  }
+ ],
+ "health_pages": [],
+ "other_pages": [
+  "/",
+  "/util/contact",
+  "/investor-centre/debt-investors/contact",
+  "/security-privacy"
+ ],
+ "meta_dl": {
+  "origin_only": 0,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [],
+ "privacy_url": "https://www.wesfarmers.com.au/security-privacy",
+ "undisclosed": [],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control; ad-tech fired with no interaction: Google Analytics audiences (advertising features), LinkedIn Insight Tag"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "Google Analytics audiences (advertising features), LinkedIn Insight Tag"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/wesfarmers_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "Google Analytics audiences (advertising features)",
+   "/",
+   "-",
+   "G-151S87N7T2",
+   "No",
+   "1"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/",
+   "g, js",
+   "4027457",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/investor-centre/debt-investors/contact",
+   "g, js",
+   "4027457",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/security-privacy",
+   "g, js",
+   "4027457",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/util/contact",
+   "g, js",
+   "4027457",
+   "Yes",
+   "4"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/",
+   "page_view",
+   "G-151S87N7T2, UA-7513139-1",
+   "Yes",
+   "3"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/investor-centre/debt-investors/contact",
+   "-",
+   "UA-7513139-1",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/security-privacy",
+   "-",
+   "UA-7513139-1",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/util/contact",
+   "-",
+   "UA-7513139-1",
+   "Yes",
+   "1"
+  ]
+ ],
+ "log_total": 9
+}

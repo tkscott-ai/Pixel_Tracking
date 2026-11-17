@@ -1,0 +1,177 @@
+{
+ "domain": "bupa.com.au",
+ "url": "https://www.bupa.com.au/",
+ "sector": "Private health insurance",
+ "scanned_at": "2026-11-17 01:08 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 1,
+ "n_health_pages_with_adtech": 1,
+ "adtech_vendors": [
+  "Google Ads / DoubleClick",
+  "Meta Pixel"
+ ],
+ "vendors": [
+  {
+   "vendor": "Google Ads / DoubleClick",
+   "category": "Advertising",
+   "ids": "16623307320, 17592936811 (+2 more)",
+   "events": "gtag.config, page_view",
+   "pages": "5 page(s), e.g. /, /contact-us (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Yes (5 page(s))"
+  },
+  {
+   "vendor": "Meta Pixel",
+   "category": "Advertising",
+   "ids": "507001476142613",
+   "events": "PageView",
+   "pages": "5 page(s), e.g. /, /contact-us (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Yes (1 page(s))"
+  }
+ ],
+ "health_pages": [
+  {
+   "path": "/telehealth",
+   "forms": 0,
+   "adtech": [
+    "Google Ads / DoubleClick",
+    "Meta Pixel"
+   ],
+   "url_sent_to": [
+    "Google Ads / DoubleClick"
+   ]
+  }
+ ],
+ "other_pages": [
+  "/",
+  "/contact-us",
+  "/contact-us/find-a-bupa-store",
+  "/help/privacy-and-security-trust-centre"
+ ],
+ "meta_dl": {
+  "origin_only": 4,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [],
+ "privacy_url": "https://www.bupa.com.au/help/privacy-and-security-trust-centre",
+ "undisclosed": [
+  "Google Ads / DoubleClick",
+  "Meta Pixel"
+ ],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control; ad-tech fired with no interaction: Google Ads / DoubleClick, Meta Pixel"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "Google Ads / DoubleClick, Meta Pixel"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/bupa_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "Google Ads / DoubleClick",
+   "/",
+   "gtag.config, page_view",
+   "16623307320, 17592936811, ",
+   "Yes",
+   "12"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/contact-us",
+   "gtag.config, page_view",
+   "16623307320, 17592936811, ",
+   "Yes",
+   "8"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/contact-us/find-a-bupa-store",
+   "gtag.config, page_view",
+   "16623307320, 17592936811, ",
+   "Yes",
+   "8"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/help/privacy-and-security-trust-centre",
+   "gtag.config, page_view",
+   "16623307320, 17592936811, ",
+   "Yes",
+   "8"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/telehealth",
+   "gtag.config, page_view",
+   "16623307320, 17592936811, ",
+   "Yes",
+   "8"
+  ],
+  [
+   "Meta Pixel",
+   "/",
+   "PageView",
+   "507001476142613",
+   "Yes",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/contact-us",
+   "PageView",
+   "507001476142613",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/contact-us/find-a-bupa-store",
+   "PageView",
+   "507001476142613",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/help/privacy-and-security-trust-centre",
+   "PageView",
+   "507001476142613",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/telehealth",
+   "PageView",
+   "507001476142613",
+   "No",
+   "1"
+  ]
+ ],
+ "log_total": 10
+}

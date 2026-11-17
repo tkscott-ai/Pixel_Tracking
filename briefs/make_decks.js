@@ -29,7 +29,7 @@ const rejectFound = (d) => d.consent_modes.some((m) => m.mode === "Reject clicke
 function bannerLine(d) {
   if (d.cmps.length) return `A cookie banner or notice was detected (${d.cmps.join(", ")}).`;
   if (acceptFound(d)) return "An Accept button was found on the page, although the banner type was not recognised.";
-  return "No cookie banner or consent platform was detected.";
+  return "The scan did not recognise a cookie banner or consent platform on the pages visited (see the screenshot).";
 }
 function nice(list) { return list.length <= 2 ? list.join(" and ") : list.slice(0, -1).join(", ") + " and " + list[list.length - 1]; }
 
@@ -79,7 +79,8 @@ async function build(d, outFile) {
   s.addText("What the check observed", { placeholder: "title" });
   const cards = [
     [String(d.adtech_vendors.length), "advertising or session-replay vendors made requests before any interaction"],
-    [`${d.n_health_pages_with_adtech} of ${d.n_health_pages}`, "health-related pages visited had advertising or replay requests"],
+    d.n_health_pages === 0 ? ["None", "of the pages visited matched health keywords, so none was assessed as health-related"]
+      : [`${d.n_health_pages_with_adtech} of ${d.n_health_pages}`, "health-related pages visited had advertising or replay requests"],
     [VERDICT_SHORT[d.consent_verdict] || "Not tested", "behaviour when a Reject / Accept control was used"],
   ];
   cards.forEach(([big, label], i) => {
@@ -90,6 +91,7 @@ async function build(d, outFile) {
   });
   const urlVendors = [...new Set(d.health_pages.flatMap((p) => p.url_sent_to))];
   const bullets = [];
+  if (!d.vendors.length) bullets.push("No advertising, analytics or session-replay requests were matched on the pages visited. Other pages, or tags that load later or only for some visitors, were not seen.");
   if (d.adtech_vendors.length) bullets.push(`Requests to ${nice(d.adtech_vendors)} were made as soon as pages loaded, before any consent control was used.`);
   if (urlVendors.length) bullets.push(`On health-related pages, the page URL appeared in requests to ${nice(urlVendors)}.`);
   if (d.meta_dl.origin_only > 0 && d.meta_dl.with_path === 0) bullets.push("Meta Pixel requests on inner pages carried only the site address, not the page path, in the document-location parameter.");
@@ -102,18 +104,20 @@ async function build(d, outFile) {
   // 3. What fired, where
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Brief" });
   s.addText("What fired, and where", { placeholder: "title" });
+  const noVendors = d.vendors.length === 0;
   const head = ["Vendor", "Type", "Identifier", "Events seen", "Pages seen on", "Page URL in request"].map((t) => ({
     text: t, options: { bold: true, color: HEX.white, fill: { color: HEX.ink }, fontSize: 12 } }));
   const rows = [head].concat(d.vendors.slice(0, 9).map((v) => [v.vendor, v.category, v.ids, v.events, `${v.pages}`, v.url_in_request]
     .map((t) => ({ text: String(t), options: { fontSize: 11, color: HEX.ink } }))));
-  s.addTable(rows, { x: 0.6, y: 1.5, w: 12.1, colW: [2.4, 1.3, 1.8, 2.3, 2.3, 2.0], border: { type: "solid", pt: 0.75, color: HEX.line }, valign: "middle", margin: [0.05, 0.08, 0.05, 0.08], autoPage: false, objectName: "Vendor table" });
+  if (noVendors) s.addText("No requests to known advertising, analytics or session-replay vendors were matched on the pages visited.", { x: 0.6, y: 1.6, w: 12.1, h: 0.8, fontSize: 18, color: C.text1, isTextBox: true, margin: 0 });
+  else s.addTable(rows, { x: 0.6, y: 1.5, w: 12.1, colW: [2.4, 1.3, 1.8, 2.3, 2.3, 2.0], border: { type: "solid", pt: 0.75, color: HEX.line }, valign: "middle", margin: [0.05, 0.08, 0.05, 0.08], autoPage: false, objectName: "Vendor table" });
   s.addText("Requests were matched against known vendor address patterns. “Data sent” means a request that transmits data to the vendor, not merely a library download.",
     { x: 0.6, y: 6.45, w: 12.1, h: 0.45, fontSize: 11, color: C.accent3, isTextBox: true, margin: 0 });
   notes(s, method);
 
   // 4. Health-related pages
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Brief" });
-  s.addText(d.external ? "Pages about health, life insurance and claims" : "Health-related pages visited", { placeholder: "title" });
+  s.addText(d.insurer ? "Pages about health, life insurance and claims" : "Health-related pages visited", { placeholder: "title" });
   if (d.health_pages.length) {
     const h2 = ["Page", "Forms", "Advertising / replay requests seen", "Page URL sent to advertising vendor"].map((t) => ({ text: t, options: { bold: true, color: HEX.white, fill: { color: HEX.ink }, fontSize: 12 } }));
     const r2 = [h2].concat(d.health_pages.slice(0, 8).map((p) => [p.path.slice(0, 60), String(p.forms), p.adtech.join(", ") || "None observed", p.url_sent_to.join(", ") || "Not observed"]
@@ -122,7 +126,7 @@ async function build(d, outFile) {
   } else {
     s.addText("No pages matching these keywords were visited in this scan.", { x: 0.6, y: 1.6, w: 12.1, h: 0.6, fontSize: 16, color: C.text1, isTextBox: true, margin: 0 });
   }
-  s.addText("“Health-related” means the page address matches keywords (for example health, life insurance, income protection, claims or hardship). It does not show that a page collects or reveals information about an individual’s health.",
+  s.addText((d.insurer ? "“Health-related” means the page address matches keywords (for example health, life insurance, income protection, claims or hardship). It does not show that a page collects or reveals information about an individual’s health." : "“Health-related” means the page address matches health keywords (for example a condition, treatment or booking page). It does not show that the page reveals information about an individual’s health."),
     { x: 0.6, y: Math.min(6.2, 1.5 + (Math.min(d.health_pages.length, 8) + 1) * 0.42 + 0.3), w: 12.1, h: 0.7, fontSize: 12, color: C.accent3, isTextBox: true, margin: 0 });
   notes(s, method);
 
@@ -167,6 +171,34 @@ async function build(d, outFile) {
     { x: 0.6, y: 3.9, w: 12.1, h: 2.9, fontSize: 14, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 8 });
   notes(s, method + " Control-finding is automated and may miss banners with unusual designs; check the screenshots.");
 
+  // 6b. Privacy policy (only when the policy check was run)
+  if (d.policy) {
+    s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Brief" });
+    s.addText("What the published privacy information says", { placeholder: "title" });
+    const P = d.policy;
+    if (!P.read) {
+      s.addText(`The privacy policy could not be read automatically (${P.error || "unavailable"}).`, { x: 0.6, y: 1.6, w: 12.1, h: 0.8, fontSize: 18, color: C.text1, isTextBox: true, margin: 0 });
+    } else {
+      const hh = (t) => ({ text: t, options: { bold: true, color: HEX.white, fill: { color: HEX.ink }, fontSize: 12 } });
+      const tRows = [[hh("Policy mentions"), hh("Found?")]].concat(P.topics.map((t) => [
+        { text: t.label, options: { fontSize: 12, color: HEX.ink } },
+        { text: t.yes ? "Yes" : "No", options: { fontSize: 12, bold: true, color: t.yes ? HEX.teal : HEX.amber } }]));
+      s.addTable(tRows, { x: 0.6, y: 1.45, w: 5.6, colW: [4.3, 1.3], border: { type: "solid", pt: 0.75, color: HEX.line }, valign: "middle", margin: [0.06, 0.1, 0.06, 0.1], autoPage: false, objectName: "Policy topics" });
+      const vRows = [[hh("Tool we observed"), hh("Named in policy?")]].concat(P.vendors.length ? P.vendors.map((v) => [
+        { text: v.vendor, options: { fontSize: 12, color: HEX.ink } },
+        { text: v.named ? "Yes" : "Not found", options: { fontSize: 12, bold: true, color: v.named ? HEX.teal : HEX.amber } }])
+        : [[{ text: "No tracking tools matched", options: { fontSize: 12, color: HEX.ink } }, { text: "n/a", options: { fontSize: 12, color: HEX.ink } }]]);
+      s.addTable(vRows, { x: 6.8, y: 1.45, w: 5.9, colW: [4.0, 1.9], border: { type: "solid", pt: 0.75, color: HEX.line }, valign: "middle", margin: [0.06, 0.1, 0.06, 0.1], autoPage: false, objectName: "Policy vendors" });
+      const docs = P.docs.map((u) => u.replace(/^https?:\/\//, "")).join("  ·  ");
+      s.addText([
+        { text: "How to read this: ", options: { bold: true } },
+        { text: "a keyword check of the page(s) read, not a legal review. Other notices may exist. A privacy policy on its own is not the same as notice at the time a visitor arrives, which the Commissioner expected in the Monash determination [113, 115]." , options: { breakLine: true } },
+        { text: `Read: ${docs}`, options: { color: HEX.slate } },
+      ], { x: 0.6, y: 5.0, w: 12.1, h: 1.7, fontSize: 12, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 6 });
+    }
+    notes(s, "Keyword check of the privacy page(s) listed. Verify against the organisation's full set of notices before saying anything about disclosure.");
+  }
+
   // 7. Context
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Brief" });
   s.addText("Context: the OAIC’s Monash IVF determination", { placeholder: "title" });
@@ -184,7 +216,7 @@ async function build(d, outFile) {
     "Not observed: retargeting, audience uploads, whether information is personal or sensitive, and whether notice or consent was adequate.",
     "The ruling concerns one respondent, makes no pixel-by-pixel finding, and the Commissioner calls the identifiability reasoning potentially novel [74]. Review rights exist.",
     "This brief does not say the organisation has breached the Privacy Act.",
-  ].concat(d.external ? ["The determination concerned a health service provider. Whether and how it applies to an insurer’s website is a question for the organisation and its advisers."] : []);
+  ].concat(d.insurer ? ["The determination concerned a health service provider. Whether and how it applies to an insurer’s website is a question for the organisation and its advisers."] : []);
   s.addText(right.map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1 } })), { x: 7.0, y: 1.85, w: 5.7, h: 4.9, fontSize: 15, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 8 });
   notes(s, "Paragraph references are to Commissioner Initiated Investigation into Monash IVF Pty Ltd (Privacy) [2026] AICmr 40. Verify against the primary text before relying on them.");
 
@@ -198,7 +230,7 @@ async function build(d, outFile) {
     "Check whether retargeting or audience uploads use data from health-related pages or forms.",
     "Compare the notice given on arrival, and the privacy policy, against what the tags actually do.",
     "Consider a privacy impact assessment for any tracking on health-related pages.",
-  ].concat(d.external ? ["Confirm what the Meta Pixel and Google tags are configured to send from life insurance, income protection, health insurance, claims and hardship pages."] : []);
+  ].concat(d.insurer ? ["Confirm what the Meta Pixel and Google tags are configured to send from life insurance, income protection, health insurance, claims and hardship pages."] : []);
   s.addText(checks.map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1 } })), { x: 0.6, y: 1.5, w: 12.1, h: 4.9, fontSize: 16, color: C.text1, valign: "top", isTextBox: true, margin: 0, paraSpaceAfter: 10 });
   notes(s, "Neutral checklist; not advice specific to the organisation's legal position.");
 

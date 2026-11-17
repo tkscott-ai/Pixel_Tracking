@@ -1,0 +1,128 @@
+{
+ "domain": "sigmahealthcare.com.au",
+ "url": "https://www.sigmahealthcare.com.au/",
+ "sector": "Pharmacy & retail health",
+ "scanned_at": "2026-11-17 01:07 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 2,
+ "n_health_pages_with_adtech": 0,
+ "adtech_vendors": [
+  "Google Analytics audiences (advertising features)"
+ ],
+ "vendors": [
+  {
+   "vendor": "Google Analytics audiences (advertising features)",
+   "category": "Advertising",
+   "ids": "G-37TR1K1J8R",
+   "events": "-",
+   "pages": "1 page(s), e.g. /",
+   "page_count": 1,
+   "url_in_request": "Not observed"
+  },
+  {
+   "vendor": "Google Analytics (GA4)",
+   "category": "Analytics",
+   "ids": "G-37TR1K1J8R",
+   "events": "page_view",
+   "pages": "3 page(s), e.g. /, /contact-us/ (+1 more)",
+   "page_count": 3,
+   "url_in_request": "Yes (3 page(s))"
+  }
+ ],
+ "health_pages": [
+  {
+   "path": "/discount-drug-store/",
+   "forms": 2,
+   "adtech": [],
+   "url_sent_to": []
+  },
+  {
+   "path": "/medication-management/",
+   "forms": 0,
+   "adtech": [],
+   "url_sent_to": []
+  }
+ ],
+ "other_pages": [
+  "/",
+  "/contact-us/",
+  "/privacy-policy/"
+ ],
+ "meta_dl": {
+  "origin_only": 0,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [],
+ "privacy_url": "https://sigmahealthcare.com.au/privacy-policy/",
+ "undisclosed": [
+  "Google Analytics (GA4)",
+  "Google Analytics audiences (advertising features)"
+ ],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control; ad-tech fired with no interaction: Google Analytics audiences (advertising features)"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "Google Analytics audiences (advertising features)"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/sigmahealthcare_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "Google Analytics audiences (advertising features)",
+   "/",
+   "-",
+   "G-37TR1K1J8R",
+   "No",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/",
+   "page_view",
+   "G-37TR1K1J8R",
+   "Yes",
+   "2"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/contact-us/",
+   "page_view",
+   "G-37TR1K1J8R",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/discount-drug-store/",
+   "page_view",
+   "G-37TR1K1J8R",
+   "Yes",
+   "1"
+  ]
+ ],
+ "log_total": 4
+}

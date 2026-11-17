@@ -602,3 +602,17 @@ def test_robots_ignore_flag_bypasses_everything():
 def test_report_method_note_does_not_overclaim_robots():
     out = ps.render_report([site([H("meta")])])
     assert "robots.txt checked and respected" in out and "robots.txt honoured" not in out
+
+
+def test_client_tier_is_a_label_only_never_scored(tmp_path):
+    a = site([H("meta")]); a.sector = "Private health insurance"
+    b = site([H("meta")]); b.sector = "Private health insurance"; b.client_tier = "High"
+    assert ps.assess(a)["score"] == ps.assess(b)["score"] and ps.assess(a)["rating"] == ps.assess(b)["rating"]
+    b.assessment = ps.assess(b)
+    out = ps.render_report([b])
+    assert "Client tier (supplied)" in out
+    assert "Client tier (supplied)" not in ps.render_report([a])
+    p = tmp_path / "t.csv"; ps.save_csv([b], str(p))
+    assert list(csv.DictReader(open(p)))[0]["client_tier"] == "High"
+    t = tmp_path / "targets.csv"; t.write_text("domain,url,sector,tier\nx.com,https://x.com/,Banking,Lower\n")
+    assert ps.load_targets(str(t))[0]["tier"] == "Lower"

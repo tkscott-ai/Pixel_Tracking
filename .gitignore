@@ -27,3 +27,6 @@ data/targets_shortlist2.csv
 demo/
 for_sending/
 run_*/
+top10/
+client_briefs_external/
+icon_briefs/

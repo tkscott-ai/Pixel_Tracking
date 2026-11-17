@@ -1,0 +1,187 @@
+{
+ "domain": "australianunity.com.au",
+ "url": "https://www.australianunity.com.au/",
+ "sector": "Private health insurance",
+ "scanned_at": "2026-11-17 01:09 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 2,
+ "n_health_pages_with_adtech": 2,
+ "adtech_vendors": [
+  "LinkedIn Insight Tag",
+  "Meta Pixel"
+ ],
+ "vendors": [
+  {
+   "vendor": "LinkedIn Insight Tag",
+   "category": "Advertising",
+   "ids": "2806652, 4596212",
+   "events": "g, js",
+   "pages": "5 page(s), e.g. /, /home-services/contact-us (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Yes (5 page(s))"
+  },
+  {
+   "vendor": "Meta Pixel",
+   "category": "Advertising",
+   "ids": "470870316628060, 707024810174841",
+   "events": "HCS Page View, PageView",
+   "pages": "5 page(s), e.g. /, /home-services/contact-us (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Yes (1 page(s))"
+  }
+ ],
+ "health_pages": [
+  {
+   "path": "/home-services/home-care-referrals",
+   "forms": 1,
+   "adtech": [
+    "LinkedIn Insight Tag",
+    "Meta Pixel"
+   ],
+   "url_sent_to": [
+    "LinkedIn Insight Tag"
+   ]
+  },
+  {
+   "path": "/wealth/enquiries",
+   "forms": 0,
+   "adtech": [
+    "LinkedIn Insight Tag",
+    "Meta Pixel"
+   ],
+   "url_sent_to": [
+    "LinkedIn Insight Tag"
+   ]
+  }
+ ],
+ "other_pages": [
+  "/",
+  "/home-services/contact-us",
+  "/privacy-policy"
+ ],
+ "meta_dl": {
+  "origin_only": 8,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [
+  "Cookie notice (unrecognised platform)"
+ ],
+ "privacy_url": "https://www.australianunity.com.au/privacy-policy",
+ "undisclosed": [],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control; ad-tech fired with no interaction: LinkedIn Insight Tag, Meta Pixel",
+  "A cookie banner/notice was detected (Cookie notice (unrecognised platform)) but offers no recognisable Accept/Reject button (notice-only, or an unrecognised design) - check the screenshot. A notice may bear on APP 5 but is not itself consent under APP 3.3"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "LinkedIn Insight Tag, Meta Pixel"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/australianunity_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "LinkedIn Insight Tag",
+   "/",
+   "g, js",
+   "4596212",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/home-services/contact-us",
+   "g, js",
+   "2806652",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/home-services/home-care-referrals",
+   "g, js",
+   "2806652",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/privacy-policy",
+   "g, js",
+   "4596212",
+   "Yes",
+   "4"
+  ],
+  [
+   "LinkedIn Insight Tag",
+   "/wealth/enquiries",
+   "g, js",
+   "4596212",
+   "Yes",
+   "4"
+  ],
+  [
+   "Meta Pixel",
+   "/",
+   "PageView",
+   "470870316628060",
+   "Yes",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/home-services/contact-us",
+   "HCS Page View, PageView",
+   "470870316628060, 707024810",
+   "No",
+   "3"
+  ],
+  [
+   "Meta Pixel",
+   "/home-services/home-care-referrals",
+   "HCS Page View, PageView",
+   "470870316628060, 707024810",
+   "No",
+   "3"
+  ],
+  [
+   "Meta Pixel",
+   "/privacy-policy",
+   "PageView",
+   "470870316628060",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/wealth/enquiries",
+   "PageView",
+   "470870316628060",
+   "No",
+   "1"
+  ]
+ ],
+ "log_total": 10
+}

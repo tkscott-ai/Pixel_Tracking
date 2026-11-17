@@ -273,6 +273,7 @@ class SiteResult:
     privacy_mentions: list[str] = field(default_factory=list)
     assessment: dict[str, Any] = field(default_factory=dict)
     consent_test: Optional[dict] = None   # only with --consent-test
+    client_tier: str = ""                  # optional label supplied by the operator (targets.csv "tier"); never used in scoring
 
 
 # --------------------------------------------------------------------------- #
@@ -755,7 +756,7 @@ def result_from_dict(d: dict) -> SiteResult:
         hits=[TrackerHit(**h) for h in d.get("hits", [])],
         cmps=d.get("cmps", []), privacy_url=d.get("privacy_url", ""),
         privacy_mentions=d.get("privacy_mentions", []), assessment=d.get("assessment", {}),
-        consent_test=d.get("consent_test"),
+        consent_test=d.get("consent_test"), client_tier=d.get("client_tier", ""),
     )
 
 
@@ -773,7 +774,7 @@ def load_json(path: str) -> list[SiteResult]:
     return [result_from_dict(d) for d in items]
 
 
-CSV_FIELDS = ["domain", "url", "sector", "city", "status", "rating", "score", "vendors", "pixel_ids",
+CSV_FIELDS = ["domain", "url", "sector", "city", "client_tier", "status", "rating", "score", "vendors", "pixel_ids",
               "events", "meta_advanced_matching", "consent_platforms", "consent_test", "pages_scanned", "reasons", "error"]
 
 
@@ -784,7 +785,7 @@ def save_csv(results: list[SiteResult], path: str) -> None:
         for r in results:
             a = r.assessment or assess(r)
             w.writerow({
-                "domain": r.domain, "url": r.url, "sector": r.sector, "city": r.city, "status": r.status,
+                "domain": r.domain, "url": r.url, "sector": r.sector, "city": r.city, "client_tier": r.client_tier, "status": r.status,
                 "rating": a["rating"], "score": a["score"], "vendors": "; ".join(a["vendors"]),
                 "pixel_ids": "; ".join(f"{v}={'/'.join(i)}" for v, i in a["pixel_ids"].items()),
                 "events": "; ".join(a["events"]),
@@ -931,6 +932,7 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
     for r in rs:
         if not r.assessment:
             r.assessment = assess(r)
+    has_tier = any(r.client_tier for r in rs)
     counts = {k: sum(1 for r in rs if r.assessment["rating"] == k)
               for k in ("High", "Medium", "Low", "Observed", "None", "Not scanned")}
     parts = [
@@ -956,14 +958,14 @@ def render_report(results: list[SiteResult], generated: str = "") -> str:
         "<option>High</option><option>Medium</option><option>Low</option><option>Observed</option><option>None</option>"
         "<option>Not scanned</option></select></div>",
         "<table id='t'><thead><tr><th>Site</th><th>Sector</th><th>Rating</th><th>Score</th>"
-        "<th>Vendors firing pre-consent</th><th>CMP</th></tr></thead><tbody>",
+        + ("<th>Client tier (supplied)</th>" if has_tier else "") + "<th>Vendors firing pre-consent</th><th>CMP</th></tr></thead><tbody>",
     ]
     for i, r in enumerate(rs):
         a = r.assessment
         parts.append(
             f"<tr data-id='{i}' data-rating='{_e(a['rating'])}'><td><a href='#d-{i}'>{_e(r.domain)}</a></td>"
             f"<td>{_e(r.sector)}</td><td>{_badge(a['rating'])}</td><td data-v='{a['score']}'>{a['score']}</td>"
-            f"<td>{_e(', '.join(a['vendors']) or '—')}</td><td>{_e(', '.join(r.cmps) or '—')}</td></tr>")
+            + (f"<td>{_e(r.client_tier or '—')}</td>" if has_tier else "") + f"<td>{_e(', '.join(a['vendors']) or '—')}</td><td>{_e(', '.join(r.cmps) or '—')}</td></tr>")
     parts.append("</tbody></table><h2>Site detail</h2>")
     for i, r in enumerate(rs):
         a = r.assessment
@@ -1116,7 +1118,7 @@ def load_targets(path: str) -> list[dict]:
         if not re.match(r"^https?://", url):
             url = "https://" + url
         out.append({"domain": r.get("domain") or domain_of(url), "url": url,
-                    "sector": r.get("sector", ""), "city": r.get("city", "")})
+                    "sector": r.get("sector", ""), "city": r.get("city", ""), "tier": r.get("tier", "")})
     return out
 
 
@@ -1217,14 +1219,18 @@ CONSENT_TEXT: dict[str, re.Pattern] = {
 }
 # Fallback for banners we don't recognise: a fixed/sticky element whose text talks about cookies/pixels.
 BANNER_JS = """() => {
+  const vh = window.innerHeight, vw = window.innerWidth, rx = /cookie|tracking pixel|your privacy/i;
   for (const el of document.querySelectorAll('body *')) {
     const cs = getComputedStyle(el);
-    if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
     const r = el.getBoundingClientRect();
     if (r.width < 150 || r.height < 20) continue;
+    const pinned = cs.position === 'fixed' || cs.position === 'sticky';
+    // also catch notices that sit in the normal flow at the very top or bottom of the first screen
+    const edge = ((r.top < 160 && r.top > -5) || (r.bottom > vh - 200 && r.bottom < vh + 5)) && r.width > vw * 0.5;
+    if (!pinned && !edge) continue;
     const t = (el.innerText || '').trim();
-    if (t.length > 0 && t.length < 1500 && /cookie|tracking pixel|your privacy/i.test(t)) return true;
+    if (t.length > 0 && t.length < 1500 && rx.test(t)) return true;
   }
   return false;
 }"""
@@ -1395,7 +1401,7 @@ async def scan_site(browser: Any, target: dict, *, max_pages: int = 3, nav_timeo
                     consent_test: bool = False) -> SiteResult:
     """Scan one site in a fresh, consent-less browser context."""
     res = SiteResult(domain=target["domain"], url=target["url"], sector=target.get("sector", ""),
-                     city=target.get("city", ""), scanned_at=_now())
+                     city=target.get("city", ""), scanned_at=_now(), client_tier=target.get("tier", ""))
     robots = robots or Robots()
     if not await robots.allowed(target["url"]):
         res.status, res.error = "skipped_robots", robots.why_not(target["url"])

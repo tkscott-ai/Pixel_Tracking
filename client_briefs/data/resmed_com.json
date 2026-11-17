@@ -1,0 +1,56 @@
+{
+ "domain": "resmed.com",
+ "url": "https://www.resmed.com/",
+ "sector": "Medical devices & consumer health",
+ "scanned_at": "2026-11-17 01:09 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 1,
+ "n_health_pages": 0,
+ "n_health_pages_with_adtech": 0,
+ "adtech_vendors": [],
+ "vendors": [],
+ "health_pages": [],
+ "other_pages": [
+  "/"
+ ],
+ "meta_dl": {
+  "origin_only": 0,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [],
+ "privacy_url": "",
+ "undisclosed": [],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "None observed"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/resmed_com_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [],
+ "log_total": 0
+}

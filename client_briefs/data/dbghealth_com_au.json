@@ -1,0 +1,96 @@
+{
+ "domain": "dbghealth.com.au",
+ "url": "https://www.dbghealth.com.au/",
+ "sector": "Hospitals & health services",
+ "scanned_at": "2026-11-17 01:10 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 4,
+ "n_health_pages": 0,
+ "n_health_pages_with_adtech": 0,
+ "adtech_vendors": [],
+ "vendors": [
+  {
+   "vendor": "Google Analytics (GA4)",
+   "category": "Analytics",
+   "ids": "G-SX63Q5KS4T",
+   "events": "page_view",
+   "pages": "3 page(s), e.g. /, /businesses/axe-health-services (+1 more)",
+   "page_count": 3,
+   "url_in_request": "Yes (3 page(s))"
+  }
+ ],
+ "health_pages": [],
+ "other_pages": [
+  "/",
+  "/contact-us",
+  "/businesses/axe-health-services",
+  "/privacy-policy"
+ ],
+ "meta_dl": {
+  "origin_only": 0,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [],
+ "privacy_url": "https://www.dbghealth.com.au/privacy-policy",
+ "undisclosed": [
+  "Google Analytics (GA4)"
+ ],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "None observed"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/dbghealth_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "Google Analytics (GA4)",
+   "/",
+   "page_view",
+   "G-SX63Q5KS4T",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/businesses/axe-health-services",
+   "page_view",
+   "G-SX63Q5KS4T",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/contact-us",
+   "page_view",
+   "G-SX63Q5KS4T",
+   "Yes",
+   "1"
+  ]
+ ],
+ "log_total": 3
+}

@@ -1,0 +1,108 @@
+{
+ "domain": "sonichealthcare.com",
+ "url": "https://www.sonichealthcare.com/",
+ "sector": "Pathology & diagnostics",
+ "scanned_at": "2026-11-17 01:08 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 0,
+ "n_health_pages_with_adtech": 0,
+ "adtech_vendors": [],
+ "vendors": [
+  {
+   "vendor": "Google Analytics (GA4)",
+   "category": "Analytics",
+   "ids": "G-3D5XL5JG1S, G-8X7VHES6B9",
+   "events": "page_view, scroll",
+   "pages": "4 page(s), e.g. /, /contact/laboratory-medicine-pathology/ (+2 more)",
+   "page_count": 4,
+   "url_in_request": "Yes (3 page(s))"
+  }
+ ],
+ "health_pages": [],
+ "other_pages": [
+  "/",
+  "/contact/sonic-clinical-services/",
+  "/contact/laboratory-medicine-pathology/",
+  "/our-services/laboratory-medicine-pathology/",
+  "/privacy-and-security/privacy-policy/"
+ ],
+ "meta_dl": {
+  "origin_only": 0,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [
+  "Cookie notice (unrecognised platform)"
+ ],
+ "privacy_url": "https://www.sonichealthcare.com/privacy-and-security/privacy-policy/",
+ "undisclosed": [
+  "Google Analytics (GA4)"
+ ],
+ "consent_verdict": "no_adtech_observed",
+ "consent_verdict_label": "No ad-tech observed in any mode",
+ "consent_notes": [
+  "No ad-tech/replay beacons in any mode",
+  "Accept control found but no Reject control located (a missing first-layer Reject is worth checking manually)"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "None observed"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "Yes",
+   "adtech": "None observed"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/sonichealthcare_com_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "Google Analytics (GA4)",
+   "/",
+   "page_view",
+   "G-3D5XL5JG1S, G-8X7VHES6B9",
+   "Yes",
+   "2"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/contact/laboratory-medicine-pathology/",
+   "scroll",
+   "G-3D5XL5JG1S, G-8X7VHES6B9",
+   "No",
+   "2"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/contact/sonic-clinical-services/",
+   "page_view",
+   "G-3D5XL5JG1S, G-8X7VHES6B9",
+   "Yes",
+   "2"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/our-services/laboratory-medicine-pathology/",
+   "page_view",
+   "G-3D5XL5JG1S, G-8X7VHES6B9",
+   "Yes",
+   "2"
+  ]
+ ],
+ "log_total": 4
+}

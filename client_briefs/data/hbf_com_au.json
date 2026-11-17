@@ -1,0 +1,288 @@
+{
+ "domain": "hbf.com.au",
+ "url": "https://www.hbf.com.au/",
+ "sector": "Private health insurance",
+ "scanned_at": "2026-11-17 01:09 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 3,
+ "n_health_pages_with_adtech": 3,
+ "adtech_vendors": [
+  "Google Ads / DoubleClick",
+  "Google Analytics audiences (advertising features)",
+  "Meta Pixel"
+ ],
+ "vendors": [
+  {
+   "vendor": "Google Ads / DoubleClick",
+   "category": "Advertising",
+   "ids": "956238894",
+   "events": "-",
+   "pages": "6 page(s), e.g. /, /about-hbf/legal/privacy (+4 more)",
+   "page_count": 6,
+   "url_in_request": "Yes (5 page(s))"
+  },
+  {
+   "vendor": "Google Analytics audiences (advertising features)",
+   "category": "Advertising",
+   "ids": "G-MYCH9D7CM5",
+   "events": "-",
+   "pages": "6 page(s), e.g. /, /about-hbf/legal/privacy (+4 more)",
+   "page_count": 6,
+   "url_in_request": "Not observed"
+  },
+  {
+   "vendor": "Meta Pixel",
+   "category": "Advertising",
+   "ids": "336203654266608",
+   "events": "PageView",
+   "pages": "5 page(s), e.g. /, /about-hbf/legal/privacy (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Yes (1 page(s))"
+  },
+  {
+   "vendor": "Google Analytics (GA4)",
+   "category": "Analytics",
+   "ids": "G-MYCH9D7CM5",
+   "events": "-",
+   "pages": "1 page(s), e.g. /",
+   "page_count": 1,
+   "url_in_request": "Not observed"
+  }
+ ],
+ "health_pages": [
+  {
+   "path": "/benefits/health-programs-and-services/mental-health",
+   "forms": 0,
+   "adtech": [
+    "Google Ads / DoubleClick",
+    "Google Analytics audiences (advertising features)",
+    "Meta Pixel"
+   ],
+   "url_sent_to": [
+    "Google Ads / DoubleClick"
+   ]
+  },
+  {
+   "path": "/health-insurance/mental-health",
+   "forms": 0,
+   "adtech": [
+    "Google Ads / DoubleClick",
+    "Google Analytics audiences (advertising features)",
+    "Meta Pixel"
+   ],
+   "url_sent_to": [
+    "Google Ads / DoubleClick"
+   ]
+  },
+  {
+   "path": "/support/guides/mental-health-hub/understanding-mental-health-conditions",
+   "forms": 0,
+   "adtech": [
+    "Google Ads / DoubleClick",
+    "Google Analytics audiences (advertising features)",
+    "Meta Pixel"
+   ],
+   "url_sent_to": [
+    "Google Ads / DoubleClick"
+   ]
+  }
+ ],
+ "other_pages": [
+  "/",
+  "/about-hbf/legal/privacy"
+ ],
+ "meta_dl": {
+  "origin_only": 4,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [
+  "Generic cookie banner"
+ ],
+ "privacy_url": "https://www.hbf.com.au/about-hbf/legal/privacy",
+ "undisclosed": [
+  "Google Analytics (GA4)",
+  "Google Analytics audiences (advertising features)",
+  "Google Ads / DoubleClick",
+  "Meta Pixel"
+ ],
+ "consent_verdict": "no_consent_control_found",
+ "consent_verdict_label": "No Accept/Reject control could be found or clicked",
+ "consent_notes": [
+  "Could not find or click an Accept/Reject control; ad-tech fired with no interaction: Google Ads / DoubleClick, Google Analytics audiences (advertising features), Meta Pixel",
+  "A cookie banner/notice was detected (Generic cookie banner) but offers no recognisable Accept/Reject button (notice-only, or an unrecognised design) - check the screenshot. A notice may bear on APP 5 but is not itself consent under APP 3.3"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "Google Ads / DoubleClick, Google Analytics audiences (advertising features), Meta Pixel"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "No control found",
+   "adtech": "Not tested (no control to click)"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/hbf_com_au_0.jpg",
+   "role": "home",
+   "path": "/"
+  }
+ ],
+ "log": [
+  [
+   "Google Ads / DoubleClick",
+   "/",
+   "-",
+   "956238894",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/about-hbf/legal/privacy",
+   "-",
+   "956238894",
+   "Yes",
+   "3"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/benefits/health-programs-and-services/mental-",
+   "-",
+   "956238894",
+   "Yes",
+   "3"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/health-insurance/mental-health",
+   "-",
+   "956238894",
+   "Yes",
+   "3"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/support/guides/mental-health-hub",
+   "-",
+   "956238894",
+   "No",
+   "2"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/support/guides/mental-health-hub/understandin",
+   "-",
+   "956238894",
+   "Yes",
+   "1"
+  ],
+  [
+   "Google Analytics audiences (advertising features)",
+   "/",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "3"
+  ],
+  [
+   "Google Analytics audiences (advertising features)",
+   "/about-hbf/legal/privacy",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "5"
+  ],
+  [
+   "Google Analytics audiences (advertising features)",
+   "/benefits/health-programs-and-services/mental-",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "5"
+  ],
+  [
+   "Google Analytics audiences (advertising features)",
+   "/health-insurance/mental-health",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "5"
+  ],
+  [
+   "Google Analytics audiences (advertising features)",
+   "/support/guides/mental-health-hub",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "2"
+  ],
+  [
+   "Google Analytics audiences (advertising features)",
+   "/support/guides/mental-health-hub/understandin",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "3"
+  ],
+  [
+   "Meta Pixel",
+   "/",
+   "PageView",
+   "336203654266608",
+   "Yes",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/about-hbf/legal/privacy",
+   "PageView",
+   "336203654266608",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/benefits/health-programs-and-services/mental-",
+   "PageView",
+   "336203654266608",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/health-insurance/mental-health",
+   "PageView",
+   "336203654266608",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/support/guides/mental-health-hub/understandin",
+   "PageView",
+   "336203654266608",
+   "No",
+   "1"
+  ],
+  [
+   "Google Analytics (GA4)",
+   "/",
+   "-",
+   "G-MYCH9D7CM5",
+   "No",
+   "1"
+  ]
+ ],
+ "log_total": 18
+}

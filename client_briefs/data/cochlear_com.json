@@ -1,0 +1,166 @@
+{
+ "domain": "cochlear.com",
+ "url": "https://www.cochlear.com/au/en/home",
+ "sector": "Medical devices & consumer health",
+ "scanned_at": "2026-11-17 01:10 UTC",
+ "tool": "pixel_scan 0.1.0",
+ "n_pages": 5,
+ "n_health_pages": 3,
+ "n_health_pages_with_adtech": 3,
+ "adtech_vendors": [
+  "Google Ads / DoubleClick",
+  "Meta Pixel"
+ ],
+ "vendors": [
+  {
+   "vendor": "Google Ads / DoubleClick",
+   "category": "Advertising",
+   "ids": "16818050492, 18323794157 (+6 more)",
+   "events": "gtag.config",
+   "pages": "2 page(s), e.g. /au/en/home/diagnosis-and-treatment/understanding-hearing-loss, /global/en/corporate/privacy-notice",
+   "page_count": 2,
+   "url_in_request": "Yes (1 page(s))"
+  },
+  {
+   "vendor": "Meta Pixel",
+   "category": "Advertising",
+   "ids": "151166838573774, 169885987276413 (+2 more)",
+   "events": "PageView",
+   "pages": "5 page(s), e.g. /au/en/home, /au/en/home/diagnosis-and-treatment/costs-and-funding (+3 more)",
+   "page_count": 5,
+   "url_in_request": "Not observed"
+  }
+ ],
+ "health_pages": [
+  {
+   "path": "/au/en/home/diagnosis-and-treatment/costs-and-funding",
+   "forms": 0,
+   "adtech": [
+    "Meta Pixel"
+   ],
+   "url_sent_to": []
+  },
+  {
+   "path": "/au/en/home/diagnosis-and-treatment/take-a-hearing-quiz",
+   "forms": 0,
+   "adtech": [
+    "Meta Pixel"
+   ],
+   "url_sent_to": []
+  },
+  {
+   "path": "/au/en/home/diagnosis-and-treatment/understanding-hearing-loss",
+   "forms": 0,
+   "adtech": [
+    "Google Ads / DoubleClick",
+    "Meta Pixel"
+   ],
+   "url_sent_to": []
+  }
+ ],
+ "other_pages": [
+  "/au/en/home",
+  "/global/en/corporate/privacy-notice"
+ ],
+ "meta_dl": {
+  "origin_only": 7,
+  "with_path": 0
+ },
+ "adv_contact": [],
+ "adv_all": [],
+ "cmps": [
+  "OneTrust"
+ ],
+ "privacy_url": "https://www.cochlear.com/global/en/corporate/privacy-notice",
+ "undisclosed": [
+  "Google Ads / DoubleClick"
+ ],
+ "consent_verdict": "reject_ignored",
+ "consent_verdict_label": "Ad-tech still fired after Reject was clicked",
+ "consent_notes": [
+  "Ad-tech/replay still fired after clicking Reject: Google Ads / DoubleClick, Meta Pixel"
+ ],
+ "consent_modes": [
+  {
+   "mode": "No interaction",
+   "clicked": "n/a",
+   "adtech": "Google Ads / DoubleClick, Meta Pixel"
+  },
+  {
+   "mode": "Reject clicked",
+   "clicked": "Yes",
+   "adtech": "Google Ads / DoubleClick, Meta Pixel"
+  },
+  {
+   "mode": "Accept clicked",
+   "clicked": "Yes",
+   "adtech": "Google Ads / DoubleClick, Meta Pixel"
+  }
+ ],
+ "shots": [
+  {
+   "file": "/Users/timscott/pixel_scan/client_briefs/img/cochlear_com_0.jpg",
+   "role": "home",
+   "path": "/au/en/home"
+  }
+ ],
+ "log": [
+  [
+   "Google Ads / DoubleClick",
+   "/au/en/home/diagnosis-and-treatment/understand",
+   "-",
+   "-",
+   "No",
+   "2"
+  ],
+  [
+   "Google Ads / DoubleClick",
+   "/global/en/corporate/privacy-notice",
+   "gtag.config",
+   "16818050492, 18323794157, ",
+   "Yes",
+   "16"
+  ],
+  [
+   "Meta Pixel",
+   "/au/en/home",
+   "PageView",
+   "151166838573774, 169885987",
+   "No",
+   "2"
+  ],
+  [
+   "Meta Pixel",
+   "/au/en/home/diagnosis-and-treatment/costs-and-",
+   "PageView",
+   "151166838573774",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/au/en/home/diagnosis-and-treatment/take-a-hea",
+   "PageView",
+   "151166838573774",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/au/en/home/diagnosis-and-treatment/understand",
+   "PageView",
+   "151166838573774",
+   "No",
+   "1"
+  ],
+  [
+   "Meta Pixel",
+   "/global/en/corporate/privacy-notice",
+   "PageView",
+   "2031028397507801, 59305650",
+   "No",
+   "2"
+  ]
+ ],
+ "log_total": 7
+}

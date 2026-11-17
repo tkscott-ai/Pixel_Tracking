@@ -1,0 +1,37 @@
+domain,url,sector,tier,title
+wesfarmers.com.au,https://www.wesfarmers.com.au/,Pharmacy & retail health,High,Wesfarmers
+wesfarmershealth.com.au,https://www.wesfarmershealth.com.au/,Pharmacy & retail health,High,Wesfarmers Health
+sigmahealthcare.com.au,https://www.sigmahealthcare.com.au/,Pharmacy & retail health,High,Sigma Healthcare
+sonichealthcare.com,https://www.sonichealthcare.com/,Pathology & diagnostics,High,Sonic Healthcare
+bupa.com.au,https://www.bupa.com.au/,Private health insurance,High,Bupa
+hcf.com.au,https://www.hcf.com.au/,Private health insurance,High,HCF
+hbf.com.au,https://www.hbf.com.au/,Private health insurance,High,HBF
+australianunity.com.au,https://www.australianunity.com.au/,Private health insurance,High,Australian Unity
+resmed.com,https://www.resmed.com/,Medical devices & consumer health,High,ResMed
+cochlear.com,https://www.cochlear.com/au/en/home,Medical devices & consumer health,High,Cochlear
+baptistcare.org.au,https://www.baptistcare.org.au/,Aged care & disability,High,BaptistCare
+dbghealth.com.au,https://www.dbghealth.com.au/,Hospitals & health services,High,DBG Health
+woolworths.com.au,https://www.woolworths.com.au/,Retail,Medium,Woolworths
+telstra.com.au,https://www.telstra.com.au/,Telco & energy,Medium,Telstra
+resolutionlife.com.au,https://www.resolutionlife.com.au/,General & life insurance,Medium,Resolution Life
+iag.com.au,https://www.iag.com.au/,General & life insurance,Medium,IAG
+suncorp.com.au,https://www.suncorp.com.au/,General & life insurance,Medium,Suncorp
+racq.com.au,https://www.racq.com/,General & life insurance,Medium,RACQ
+racv.com.au,https://www.racv.com.au/,General & life insurance,Medium,RACV
+anz.com.au,https://www.anz.com.au/,Banking & finance,Lower,ANZ
+commbank.com.au,https://www.commbank.com.au/,Banking & finance,Lower,CBA
+nab.com.au,https://www.nab.com.au/,Banking & finance,Lower,NAB
+westpac.com.au,https://www.westpac.com.au/,Banking & finance,Lower,Westpac
+macquarie.com,https://www.macquarie.com/au/en.html,Banking & finance,Lower,Macquarie
+boq.com.au,https://www.boq.com.au/,Banking & finance,Lower,Bank of Queensland
+bendigobank.com.au,https://www.bendigobank.com.au/,Banking & finance,Lower,Bendigo and Adelaide Bank
+newscorp.com,https://newscorp.com/,Media,Lower,News Corp
+news.com.au,https://www.news.com.au/,Media,Lower,News Corp (news.com.au)
+nine.com.au,https://www.nine.com.au/,Media,Lower,Nine
+sevenwestmedia.com.au,https://www.sevenwestmedia.com.au/,Media,Lower,Seven West Media
+7news.com.au,https://7news.com.au/,Media,Lower,Seven (7NEWS)
+abc.net.au,https://www.abc.net.au/,Media,Lower,ABC
+tabcorp.com.au,https://www.tabcorp.com.au/,Gambling,Lower,Tabcorp
+qantas.com,https://www.qantas.com/au/en.html,Travel,Lower,Qantas
+flightcentre.com.au,https://www.flightcentre.com.au/,Travel,Lower,Flight Centre
+virginaustralia.com,https://www.virginaustralia.com/au/en/,Travel,Lower,Virgin Australia
