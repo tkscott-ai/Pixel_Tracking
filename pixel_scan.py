@@ -594,10 +594,29 @@ def rating_for(score: int) -> str:
     return "None"
 
 
+BLOCK_TITLE_RX = re.compile(r"access denied|forbidden|just a moment|attention required|security checkpoint|captcha|"
+                            r"are you a robot|unusual traffic|request blocked|pardon our interruption", re.I)
+
+
+def blocked_reason(res: "SiteResult") -> str:
+    """Non-empty when the site served a bot-block/error page instead of its content, so 'no trackers' means nothing."""
+    home = res.pages[0] if res.pages else None
+    if not home or any(h.kind == "beacon" for h in res.hits):
+        return ""
+    if home.status in (401, 403, 429, 503) and BLOCK_TITLE_RX.search(home.title or ""):
+        return f"the site blocked the automated browser (HTTP {home.status}, \"{home.title}\"); nothing could be assessed"
+    if home.status == 404 and not any(p.role != "home" for p in res.pages):
+        return "the home page returned HTTP 404; nothing could be assessed"
+    return ""
+
+
 def assess(res: SiteResult) -> dict[str, Any]:
     """Score a site 0-100 and give High/Medium/Low/None with reasons.
     Triage heuristic only - see DISCLAIMER."""
-    if res.status != "ok":
+    br = blocked_reason(res) if res.status == "ok" else ""
+    if res.status != "ok" or br:
+        if br:
+            return {"score": 0, "rating": "Not scanned", "reasons": [br], "vendors": [], "pixel_ids": {}, "events": []}
         return {"score": 0, "rating": "Not scanned", "reasons": [res.error or res.status],
                 "vendors": [], "pixel_ids": {}, "events": []}
     score, reasons = 0, []

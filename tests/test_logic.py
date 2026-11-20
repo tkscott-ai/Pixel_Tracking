@@ -616,3 +616,18 @@ def test_client_tier_is_a_label_only_never_scored(tmp_path):
     assert list(csv.DictReader(open(p)))[0]["client_tier"] == "High"
     t = tmp_path / "targets.csv"; t.write_text("domain,url,sector,tier\nx.com,https://x.com/,Banking,Lower\n")
     assert ps.load_targets(str(t))[0]["tier"] == "Lower"
+
+
+def test_blocked_home_page_is_not_rated_clean():
+    r = ps.SiteResult(domain="x.com.au", url="https://x.com.au/", sector="Insurance", status="ok",
+                      pages=[ps.PageInfo(url="https://x.com.au/", status=403, title="Access Denied")])
+    a = ps.assess(r)
+    assert a["rating"] == "Not scanned" and "blocked" in a["reasons"][0]
+
+
+def test_403_with_real_content_and_beacons_still_rated():
+    h = ps.TrackerHit(key="meta", vendor="Meta Pixel", category="advertising", kind="beacon", url="https://www.facebook.com/tr?id=1",
+                      page="https://x.com.au/")
+    r = ps.SiteResult(domain="x.com.au", url="https://x.com.au/", sector="Insurance", status="ok", hits=[h],
+                      pages=[ps.PageInfo(url="https://x.com.au/", status=403, title="Welcome")])
+    assert ps.assess(r)["rating"] != "Not scanned"
